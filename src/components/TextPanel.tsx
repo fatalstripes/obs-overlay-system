@@ -4,6 +4,7 @@ import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { ColorPicker } from './ColorPicker'
 import { Field } from './Field'
+import { NamePicker } from './NamePicker'
 import { Panel, ghostButtonClass, inputClass } from './Panel'
 import { Slider } from './Slider'
 
@@ -25,11 +26,10 @@ export function TextPanel() {
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Text source">
-          <input
-            className={inputClass}
-            list="obs-inputs"
+          <NamePicker
             value={current.targets.textSource}
-            onChange={(e) => setTargets({ textSource: e.target.value })}
+            options={inputs}
+            onChange={(v) => setTargets({ textSource: v })}
             placeholder="Text source name"
           />
         </Field>
@@ -44,7 +44,6 @@ export function TextPanel() {
           </select>
         </Field>
       </div>
-      <datalist id="obs-inputs">{inputs.map((i) => <option key={i} value={i} />)}</datalist>
 
       <Field label="Content">
         <textarea

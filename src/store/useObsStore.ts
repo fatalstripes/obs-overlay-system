@@ -29,7 +29,8 @@ type ObsState = {
   connect: () => Promise<void>
   disconnect: () => Promise<void>
   refreshInputs: () => Promise<void>
-  refreshFilters: (source: string) => Promise<void>
+  /** Loads the source's filters into the store and returns their names. */
+  refreshFilters: (source: string) => Promise<string[]>
 }
 
 export const useObsStore = create<ObsState>()(
@@ -76,16 +77,17 @@ export const useObsStore = create<ObsState>()(
       },
 
       refreshFilters: async (source) => {
-        if (!source) {
-          set({ filters: [] })
-          return
+        let names: string[] = []
+        if (source) {
+          try {
+            const { filters } = await obs.call('GetSourceFilterList', { sourceName: source })
+            names = filters.map((f) => String(f.filterName))
+          } catch {
+            // unknown source: leave the list empty
+          }
         }
-        try {
-          const { filters } = await obs.call('GetSourceFilterList', { sourceName: source })
-          set({ filters: filters.map((f) => String(f.filterName)) })
-        } catch {
-          set({ filters: [] })
-        }
+        set({ filters: names })
+        return names
       },
     }),
     {

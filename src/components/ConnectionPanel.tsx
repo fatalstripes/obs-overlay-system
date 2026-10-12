@@ -1,4 +1,5 @@
 import { useObsStore } from '../store/useObsStore'
+import { usePresetStore } from '../store/usePresetStore'
 import { Field } from './Field'
 import { Panel, buttonClass, ghostButtonClass, inputClass } from './Panel'
 
@@ -9,7 +10,7 @@ const dot = {
 } as const
 
 export function ConnectionPanel() {
-  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect, forgetPassword } =
+  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect, forgetPassword, refreshInputs, refreshFilters } =
     useObsStore()
   const connected = status === 'connected'
 
@@ -49,9 +50,20 @@ export function ConnectionPanel() {
         Live sync changes to OBS
       </label>
       {connected ? (
-        <button className={ghostButtonClass} onClick={() => void disconnect()}>
-          Disconnect
-        </button>
+        <div className="flex gap-2">
+          <button className={ghostButtonClass} onClick={() => void disconnect()}>
+            Disconnect
+          </button>
+          <button
+            className={ghostButtonClass}
+            onClick={() => {
+              void refreshInputs()
+              void refreshFilters(usePresetStore.getState().current.targets.shaderSource)
+            }}
+          >
+            Refresh sources
+          </button>
+        </div>
       ) : (
         <button className={buttonClass} onClick={() => void connect()} disabled={status === 'connecting'}>
           Connect
