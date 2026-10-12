@@ -22,6 +22,8 @@ type ObsState = {
   filters: string[]
   /** Whether the chosen shader filter has "Use Effect File (.effect)" ticked (the `override_entire_effect` setting) ('unknown' if it isn't a shader filter). */
   shaderOverride: 'on' | 'off' | 'unknown'
+  /** Whether the chosen shader filter is switched on in OBS (the eye icon); null if it can't be found. */
+  shaderEnabled: boolean | null
 
   setUrl: (url: string) => void
   setPassword: (password: string) => void
@@ -34,6 +36,8 @@ type ObsState = {
   /** Loads the source's filters into the store and returns their names. */
   refreshFilters: (source: string) => Promise<string[]>
   refreshShaderOverride: (source: string, filter: string) => Promise<void>
+  /** Switches the filter on or off in OBS. Rejects if OBS refuses. */
+  setShaderEnabled: (source: string, filter: string, enabled: boolean) => Promise<void>
 }
 
 export const useObsStore = create<ObsState>()(
@@ -49,6 +53,7 @@ export const useObsStore = create<ObsState>()(
       inputs: [],
       filters: [],
       shaderOverride: 'unknown',
+      shaderEnabled: null,
 
       setUrl: (url) => set({ url }),
       setPassword: (password) => set({ password }),
@@ -96,9 +101,11 @@ export const useObsStore = create<ObsState>()(
 
       refreshShaderOverride: async (source, filter) => {
         let state: 'on' | 'off' | 'unknown' = 'unknown'
+        let enabled: boolean | null = null
         if (source && filter) {
           try {
             const f = await obs.call('GetSourceFilter', { sourceName: source, filterName: filter })
+            enabled = f.filterEnabled
             // Only obs-shaderfilter filters have this setting; leave other filter kinds alone.
             if (String(f.filterKind).includes('shader')) {
               state = f.filterSettings.override_entire_effect === true ? 'on' : 'off'
@@ -107,7 +114,12 @@ export const useObsStore = create<ObsState>()(
             // unknown source/filter
           }
         }
-        set({ shaderOverride: state })
+        set({ shaderOverride: state, shaderEnabled: enabled })
+      },
+
+      setShaderEnabled: async (source, filter, enabled) => {
+        await obs.call('SetSourceFilterEnabled', { sourceName: source, filterName: filter, filterEnabled: enabled })
+        set({ shaderEnabled: enabled })
       },
     }),
     {
@@ -119,5 +131,5 @@ export const useObsStore = create<ObsState>()(
 )
 
 obs.on('ConnectionClosed', () => {
-  useObsStore.setState({ status: 'disconnected', inputs: [], filters: [], shaderOverride: 'unknown' })
+  useObsStore.setState({ status: 'disconnected', inputs: [], filters: [], shaderOverride: 'unknown', shaderEnabled: null })
 })
