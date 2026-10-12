@@ -56,3 +56,31 @@ npm run dev   # http://localhost:5317
 ```
 
 The port is fixed (`strictPort`) because Better Alerts uses 5173; change it in `vite.config.ts` if needed.
+
+## Shaders for the Shader Library
+
+The Shader Library only sets uniform *values*. The effect itself comes from a shader file loaded into the
+[obs-shaderfilter](https://github.com/exeldro/obs-shaderfilter) plugin on your source. Matching shaders live in
+[`shaders/`](shaders/):
+
+| Library presets                     | Shader file                          |
+| ----------------------------------- | ------------------------------------ |
+| Neon Glow, Electric Storm, Soft Bloom | `shaders/glow.shader`                |
+| CRT Classic                         | `shaders/crt-classic.shader`         |
+| VHS Tape                            | `shaders/vhs-tape.shader`            |
+| Glitch Burst                        | `shaders/glitch-burst.shader`        |
+| Heat Wave                           | `shaders/heat-wave.shader`           |
+| Chromatic Aberration                | `shaders/chromatic-aberration.shader`|
+| Duotone                             | `shaders/duotone.shader`             |
+
+Setup in OBS:
+1. Right-click your **text source** → **Filters** → **+** → **User-defined shader**.
+2. Tick **Load shader text from file** and browse to the `.shader` file for the preset you want.
+3. In the dashboard, connect, pick that **Source** and the **Filter** (the name you gave it, e.g. "User-defined shader"),
+   then press **Apply** on the matching preset.
+
+Tips:
+- Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
+  source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
+- Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
+- If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.
