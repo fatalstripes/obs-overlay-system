@@ -86,6 +86,8 @@ Setup in OBS:
 Tips:
 - Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
   source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
+- The **Filter on/off** switch in the Shader Uniforms panel turns the filter on or off in OBS (the eye icon) and follows
+  changes made in OBS. **Push now** and live sync only send values; they never switch the filter on.
 - Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
 - A source that vanishes when you add the filter almost always means **Use Effect File (.effect)** is unticked.
 - If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.

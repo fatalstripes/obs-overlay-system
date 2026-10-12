@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { pushShader, withSyncErrors } from '../lib/sync'
-import { useObsStore } from '../store/useObsStore'
+import { obs, useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { ColorPicker } from './ColorPicker'
 import { Field } from './Field'
 import { NamePicker } from './NamePicker'
 import { Panel, ghostButtonClass, inputClass } from './Panel'
 import { Slider } from './Slider'
+import { Switch } from './Switch'
 
 export function ShaderPanel() {
   const { current, setTargets, setUniformValue, addUniform, removeUniform } = usePresetStore()
-  const { inputs, filters, status, refreshFilters, refreshShaderOverride, shaderOverride } = useObsStore()
+  const { inputs, filters, status, refreshFilters, refreshShaderOverride, shaderOverride, shaderEnabled, setShaderEnabled } =
+    useObsStore()
   const { shaderSource, shaderFilter } = current.targets
   const connected = status === 'connected'
 
@@ -33,6 +35,20 @@ export function ShaderPanel() {
     else useObsStore.setState({ shaderOverride: 'unknown' })
   }, [connected, shaderSource, shaderFilter, refreshShaderOverride])
 
+  // Follow the filter's eye icon when it is toggled in OBS itself.
+  useEffect(() => {
+    if (!connected) return
+    const onChange = (e: { sourceName: string; filterName: string; filterEnabled: boolean }) => {
+      if (e.sourceName === shaderSource && e.filterName === shaderFilter) {
+        useObsStore.setState({ shaderEnabled: e.filterEnabled })
+      }
+    }
+    obs.on('SourceFilterEnableStateChanged', onChange)
+    return () => {
+      obs.off('SourceFilterEnableStateChanged', onChange)
+    }
+  }, [connected, shaderSource, shaderFilter])
+
   const add = () => {
     const name = newName.trim()
     if (!name) return
@@ -48,9 +64,17 @@ export function ShaderPanel() {
     <Panel
       title="Shader Uniforms"
       actions={
-        <button className={ghostButtonClass} disabled={!connected} onClick={() => void withSyncErrors(pushShader(current))}>
-          Push now
-        </button>
+        <div className="flex items-center gap-4">
+          <Switch
+            label={shaderEnabled === null ? 'Filter' : shaderEnabled ? 'Filter on' : 'Filter off'}
+            checked={shaderEnabled === true}
+            disabled={!connected || shaderEnabled === null}
+            onChange={(on) => void withSyncErrors(setShaderEnabled(shaderSource, shaderFilter, on))}
+          />
+          <button className={ghostButtonClass} disabled={!connected} onClick={() => void withSyncErrors(pushShader(current))}>
+            Push now
+          </button>
+        </div>
       }
     >
       <div className="grid gap-3 sm:grid-cols-2">
