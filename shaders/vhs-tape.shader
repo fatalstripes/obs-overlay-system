@@ -71,7 +71,7 @@ float4 mainImage(VertData v_in) : TARGET
 
     // Slow wave plus occasional per-band horizontal tearing.
     float band = floor(uv.y * uv_size.y * 0.1);
-    float tick = floor(elapsed_time * 12.0);
+    float tick = floor(fmod(elapsed_time * 12.0, 1024.0)); // wrapped: keeps hash precision on long streams
     float tear = (hash21(float2(band, tick)) - 0.5) * step(0.93, hash21(float2(band + 11.0, tick)));
     uv.x = uv.x + (sin(uv.y * 18.0 + elapsed_time * 2.0) * 0.0015 + tear * 0.03) * wobble;
 

@@ -1,6 +1,6 @@
-// glitch-burst.shader — random block displacement with RGB split. obs-shaderfilter.
+// glitch-burst.shader — random horizontal slice tearing with RGB split. obs-shaderfilter.
 // Library preset: Glitch Burst.
-// Params: glitch_amount, block_size (px), rgb_split (px), speed (changes per second)
+// Params: glitch_amount (fraction of slices hit), block_size (slice height, px), rgb_split (px), speed (changes per second)
 // Photosensitivity: keep speed low (<= 4) if you or your viewers are sensitive to flicker.
 
 uniform float4x4 ViewProj;
@@ -18,7 +18,7 @@ uniform float glitch_amount<
 > = 0.6;
 
 uniform float block_size<
-    string label = "Block Size (px)";
+    string label = "Slice Height (px)";
     string widget_type = "slider";
     float minimum = 2.0;
     float maximum = 128.0;
@@ -69,15 +69,21 @@ float hash21(float2 p)
 float4 mainImage(VertData v_in) : TARGET
 {
     float2 uv = v_in.uv;
-    float t = floor(elapsed_time * speed);
-    float2 blk = floor(uv * uv_size / max(block_size, 1.0));
 
-    // A block is "hit" this tick with probability proportional to glitch_amount.
-    float hit = step(1.0 - glitch_amount, hash21(float2(blk.y, t + blk.x * 0.37)));
-    float shove = (hash21(float2(blk.y + 31.0, t)) - 0.5) * glitch_amount * 0.3 * hit;
+    // Time is wrapped so the hash input stays small on long streams (large sin() arguments lose
+    // precision and the pattern stops changing).
+    float t = floor(fmod(elapsed_time * speed, 1024.0));
+
+    // Full-width horizontal slices, block_size px tall, so the tearing reads on thin text.
+    float row = floor(uv.y * uv_size.y / max(block_size, 1.0));
+
+    // A slice is "hit" this tick with probability glitch_amount, and slides sideways when hit.
+    float hit = step(1.0 - glitch_amount, hash21(float2(row, t)));
+    float shove = (hash21(float2(row + 31.0, t)) - 0.5) * glitch_amount * 0.5 * hit;
     uv.x = uv.x + shove;
 
-    float split = rgb_split * hit * uv_pixel_interval.x;
+    // A faint constant RGB split everywhere, much stronger inside hit slices.
+    float split = rgb_split * (0.25 + hit) * uv_pixel_interval.x;
     float4 sr = image.Sample(textureSampler, uv + float2(split, 0.0));
     float4 sg = image.Sample(textureSampler, uv);
     float4 sb = image.Sample(textureSampler, uv - float2(split, 0.0));
