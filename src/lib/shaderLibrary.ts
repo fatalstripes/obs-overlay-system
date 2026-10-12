@@ -73,7 +73,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
     shaderFile: 'glitch-burst.shader',
     name: 'Glitch Burst',
     category: 'Distortion',
-    description: 'Block displacement with RGB split.',
+    description: 'Horizontal slice tearing with RGB split.',
     uniforms: [f('glitch_amount', 0.6, 0, 1), f('block_size', 24, 2, 128, 1), f('rgb_split', 6, 0, 30, 0.5), f('speed', 4, 0, 20)],
   },
   {

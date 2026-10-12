@@ -10,7 +10,7 @@ const dot = {
 } as const
 
 export function ConnectionPanel() {
-  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect, forgetPassword, refreshInputs, refreshFilters } =
+  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect, forgetPassword, refreshInputs, refreshFilters, refreshShaderOverride } =
     useObsStore()
   const connected = status === 'connected'
 
@@ -58,7 +58,9 @@ export function ConnectionPanel() {
             className={ghostButtonClass}
             onClick={() => {
               void refreshInputs()
-              void refreshFilters(usePresetStore.getState().current.targets.shaderSource)
+              const { shaderSource, shaderFilter } = usePresetStore.getState().current.targets
+              void refreshFilters(shaderSource)
+              void refreshShaderOverride(shaderSource, shaderFilter)
             }}
           >
             Refresh sources

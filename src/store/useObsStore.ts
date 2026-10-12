@@ -20,6 +20,8 @@ type ObsState = {
   autoConnect: boolean
   inputs: string[]
   filters: string[]
+  /** Whether the chosen shader filter has "Override entire effect" ticked ('unknown' if it isn't a shader filter). */
+  shaderOverride: 'on' | 'off' | 'unknown'
 
   setUrl: (url: string) => void
   setPassword: (password: string) => void
@@ -31,6 +33,7 @@ type ObsState = {
   refreshInputs: () => Promise<void>
   /** Loads the source's filters into the store and returns their names. */
   refreshFilters: (source: string) => Promise<string[]>
+  refreshShaderOverride: (source: string, filter: string) => Promise<void>
 }
 
 export const useObsStore = create<ObsState>()(
@@ -45,6 +48,7 @@ export const useObsStore = create<ObsState>()(
       autoConnect: false,
       inputs: [],
       filters: [],
+      shaderOverride: 'unknown',
 
       setUrl: (url) => set({ url }),
       setPassword: (password) => set({ password }),
@@ -89,6 +93,22 @@ export const useObsStore = create<ObsState>()(
         set({ filters: names })
         return names
       },
+
+      refreshShaderOverride: async (source, filter) => {
+        let state: 'on' | 'off' | 'unknown' = 'unknown'
+        if (source && filter) {
+          try {
+            const f = await obs.call('GetSourceFilter', { sourceName: source, filterName: filter })
+            // Only obs-shaderfilter filters have this setting; leave other filter kinds alone.
+            if (String(f.filterKind).includes('shader')) {
+              state = f.filterSettings.override_entire_effect === true ? 'on' : 'off'
+            }
+          } catch {
+            // unknown source/filter
+          }
+        }
+        set({ shaderOverride: state })
+      },
     }),
     {
       name: 'obs-overlay-connection',
@@ -99,5 +119,5 @@ export const useObsStore = create<ObsState>()(
 )
 
 obs.on('ConnectionClosed', () => {
-  useObsStore.setState({ status: 'disconnected', inputs: [], filters: [] })
+  useObsStore.setState({ status: 'disconnected', inputs: [], filters: [], shaderOverride: 'unknown' })
 })

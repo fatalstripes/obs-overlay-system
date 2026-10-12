@@ -3,6 +3,9 @@
 // Params: glow_color, glow_size (px), glow_intensity, pulse_speed (0 = steady)
 // NOTE: the glow can only draw inside the source's bounds. Give the text source some empty
 // room (larger custom extents / padding) or the glow gets clipped at the text's box.
+// SETUP: in the filter's properties tick "Override entire effect". These files are complete effects;
+// with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
+// OBS logs "Not all shader parameters were set" and the source disappears.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
