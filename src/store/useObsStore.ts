@@ -20,7 +20,7 @@ type ObsState = {
   autoConnect: boolean
   inputs: string[]
   filters: string[]
-  /** Whether the chosen shader filter has "Override entire effect" ticked ('unknown' if it isn't a shader filter). */
+  /** Whether the chosen shader filter has "Use Effect File (.effect)" ticked (the `override_entire_effect` setting) ('unknown' if it isn't a shader filter). */
   shaderOverride: 'on' | 'off' | 'unknown'
 
   setUrl: (url: string) => void

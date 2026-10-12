@@ -76,7 +76,7 @@ The Shader Library only sets uniform *values*. The effect itself comes from a sh
 Setup in OBS:
 1. Right-click your **text source** → **Filters** → **+** → **User-defined shader**.
 2. Tick **Load shader text from file** and browse to the `.shader` file for the preset you want.
-3. **Tick "Override entire effect".** Required: these files are complete effects. With it unticked, obs-shaderfilter
+3. **Tick "Use Effect File (.effect)".** Required: these files are complete effects. With it unticked, obs-shaderfilter
    pastes the file into its own template, the uniforms get declared twice, OBS logs `Not all shader parameters were
    set`, and the source disappears. If you ticked it after adding the filter and nothing changed, delete the filter and
    re-add it with the box ticked from the start.
@@ -87,5 +87,5 @@ Tips:
 - Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
   source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
 - Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
-- A source that vanishes when you add the filter almost always means **Override entire effect** is unticked.
+- A source that vanishes when you add the filter almost always means **Use Effect File (.effect)** is unticked.
 - If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.
