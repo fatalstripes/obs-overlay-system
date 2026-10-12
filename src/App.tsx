@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { ConnectionPanel } from './components/ConnectionPanel'
+import { ShaderLibraryPanel } from './components/ShaderLibraryPanel'
 import { PresetPanel } from './components/PresetPanel'
 import { ShaderPanel } from './components/ShaderPanel'
 import { TextPanel } from './components/TextPanel'
@@ -15,6 +16,7 @@ export default function App() {
         <div className="space-y-4">
           <ConnectionPanel />
           <PresetPanel />
+          <ShaderLibraryPanel />
         </div>
         <ShaderPanel />
         <TextPanel />
