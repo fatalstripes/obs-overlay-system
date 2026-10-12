@@ -9,7 +9,7 @@ const dot = {
 } as const
 
 export function ConnectionPanel() {
-  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect } =
+  const { url, password, status, error, liveSync, setUrl, setPassword, setLiveSync, connect, disconnect, forgetPassword } =
     useObsStore()
   const connected = status === 'connected'
 
@@ -33,8 +33,17 @@ export function ConnectionPanel() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={connected}
+          autoComplete="current-password"
         />
       </Field>
+      {password && (
+        <p className="-mt-2 text-xs text-zinc-500">
+          Saved in this browser; it reconnects automatically on load.{' '}
+          <button className="underline hover:text-zinc-300" onClick={forgetPassword}>
+            Forget password
+          </button>
+        </p>
+      )}
       <label className="flex items-center gap-2 text-sm text-zinc-300">
         <input type="checkbox" checked={liveSync} onChange={(e) => setLiveSync(e.target.checked)} />
         Live sync changes to OBS
