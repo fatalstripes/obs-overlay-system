@@ -7,9 +7,10 @@ export type ShaderLibraryEntry = {
   name: string
   category: ShaderCategory
   description: string
+  /** Shader file in /shaders (repo root) that declares these uniforms. */
+  shaderFile: string
   /**
-   * Uniform names must match the `uniform` variables declared in your .effect/.shader file;
-   * rename them in the Shader Uniforms panel after applying if yours differ.
+   * Uniform names match the `uniform` variables declared in `shaderFile` (see /shaders in the repo).
    */
   uniforms: Uniform[]
 }
@@ -29,6 +30,7 @@ export const SHADER_CATEGORIES: ShaderCategory[] = ['Glow', 'Retro', 'Distortion
 export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   {
     id: 'neon-glow',
+    shaderFile: 'glow.shader',
     name: 'Neon Glow',
     category: 'Glow',
     description: 'Bright colored bloom around edges.',
@@ -36,6 +38,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'electric-storm',
+    shaderFile: 'glow.shader',
     name: 'Electric Storm',
     category: 'Glow',
     description: 'Crackling blue-white energy with fast flicker.',
@@ -43,6 +46,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'soft-bloom',
+    shaderFile: 'glow.shader',
     name: 'Soft Bloom',
     category: 'Glow',
     description: 'Gentle warm halo, good for text.',
@@ -50,6 +54,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'crt-classic',
+    shaderFile: 'crt-classic.shader',
     name: 'CRT Classic',
     category: 'Retro',
     description: 'Scanlines, curvature and a touch of noise.',
@@ -57,6 +62,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'vhs-tape',
+    shaderFile: 'vhs-tape.shader',
     name: 'VHS Tape',
     category: 'Retro',
     description: 'Tracking wobble, color bleed and grain.',
@@ -64,6 +70,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'glitch-burst',
+    shaderFile: 'glitch-burst.shader',
     name: 'Glitch Burst',
     category: 'Distortion',
     description: 'Block displacement with RGB split.',
@@ -71,6 +78,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'heat-wave',
+    shaderFile: 'heat-wave.shader',
     name: 'Heat Wave',
     category: 'Distortion',
     description: 'Slow rippling air distortion.',
@@ -78,6 +86,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'chromatic-aberration',
+    shaderFile: 'chromatic-aberration.shader',
     name: 'Chromatic Aberration',
     category: 'Color',
     description: 'Red/blue channel offset toward the edges.',
@@ -85,6 +94,7 @@ export const SHADER_LIBRARY: ShaderLibraryEntry[] = [
   },
   {
     id: 'duotone',
+    shaderFile: 'duotone.shader',
     name: 'Duotone',
     category: 'Color',
     description: 'Map shadows and highlights to two colors.',

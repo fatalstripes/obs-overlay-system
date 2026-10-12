@@ -77,6 +77,7 @@ export function ShaderLibraryPanel() {
             <div className="mt-1 font-mono text-[10px] text-zinc-600">
               {e.uniforms.map((u) => u.name).join(' · ')}
             </div>
+            <div className="font-mono text-[10px] text-violet-400/70">needs shaders/{e.shaderFile}</div>
           </li>
         ))}
       </ul>
@@ -87,7 +88,8 @@ export function ShaderLibraryPanel() {
       )}
       <p className="text-xs text-zinc-500">
         Applying replaces the uniform list; source, filter and text settings are kept. Uniforms from the previous
-        shader are reset to 0 / black in OBS. Names must match your shader — rename them afterwards if needed.
+        shader are reset to 0 / black in OBS. Each preset only does something when the filter on your source loads the
+        shader file shown on its card.
       </p>
     </Panel>
   )
