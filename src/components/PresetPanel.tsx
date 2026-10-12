@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { pushAll } from '../lib/sync'
+import { pushAll, withSyncErrors } from '../lib/sync'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { Panel, buttonClass, ghostButtonClass, inputClass } from './Panel'
@@ -20,7 +20,7 @@ export function PresetPanel() {
     <Panel
       title="Presets"
       actions={
-        <button className={ghostButtonClass} disabled={!connected} onClick={() => void pushAll(current)}>
+        <button className={ghostButtonClass} disabled={!connected} onClick={() => void withSyncErrors(pushAll(current))}>
           Push all to OBS
         </button>
       }

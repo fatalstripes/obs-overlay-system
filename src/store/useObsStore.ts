@@ -9,7 +9,10 @@ type ObsState = {
   url: string
   password: string
   status: ObsStatus
+  /** Connection failures, shown in the Connection panel. */
   error: string | null
+  /** Failed pushes to OBS, shown in the dashboard-wide banner. */
+  syncError: string | null
   /** Push changes to OBS as they are made. */
   liveSync: boolean
   inputs: string[]
@@ -18,6 +21,7 @@ type ObsState = {
   setUrl: (url: string) => void
   setPassword: (password: string) => void
   setLiveSync: (on: boolean) => void
+  dismissSyncError: () => void
   connect: () => Promise<void>
   disconnect: () => Promise<void>
   refreshInputs: () => Promise<void>
@@ -29,6 +33,7 @@ export const useObsStore = create<ObsState>((set, get) => ({
   password: '',
   status: 'disconnected',
   error: null,
+  syncError: null,
   liveSync: true,
   inputs: [],
   filters: [],
@@ -36,6 +41,7 @@ export const useObsStore = create<ObsState>((set, get) => ({
   setUrl: (url) => set({ url }),
   setPassword: (password) => set({ password }),
   setLiveSync: (liveSync) => set({ liveSync }),
+  dismissSyncError: () => set({ syncError: null }),
 
   connect: async () => {
     const { url, password } = get()
