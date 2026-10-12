@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SHADER_CATEGORIES, SHADER_LIBRARY, type ShaderCategory } from '../lib/shaderLibrary'
-import { pushShader } from '../lib/sync'
+import { pushShader, queueUniformReset, withSyncErrors } from '../lib/sync'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { Panel, ghostButtonClass } from './Panel'
@@ -16,11 +16,16 @@ export function ShaderLibraryPanel() {
   const apply = (id: string) => {
     const entry = SHADER_LIBRARY.find((e) => e.id === id)
     if (!entry) return
+    // Uniforms from the previous shader that the new one doesn't use get zeroed in OBS,
+    // so their old values can't carry over into a shader that happens to share a name.
+    const next = new Set(entry.uniforms.map((u) => u.name))
+    const stale = usePresetStore.getState().current.uniforms.filter((u) => !next.has(u.name))
+    if (connected) queueUniformReset(stale)
     applyUniforms(entry.uniforms)
     setAppliedId(id)
     // Live sync is a no-op when disabled, so push explicitly if connected and it's off.
     if (connected && !useObsStore.getState().liveSync) {
-      void pushShader(usePresetStore.getState().current)
+      void withSyncErrors(pushShader(usePresetStore.getState().current))
     }
   }
 
@@ -63,8 +68,8 @@ export function ShaderLibraryPanel() {
         ))}
       </ul>
       <p className="text-xs text-zinc-500">
-        Applying replaces the uniform list; source, filter and text settings are kept. Uniform names must match your
-        shader — rename them afterwards if needed.
+        Applying replaces the uniform list; source, filter and text settings are kept. Uniforms from the previous
+        shader are reset to 0 / black in OBS. Names must match your shader — rename them afterwards if needed.
       </p>
     </Panel>
   )

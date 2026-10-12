@@ -1,4 +1,4 @@
-import { pushText } from '../lib/sync'
+import { pushText, withSyncErrors } from '../lib/sync'
 import type { TextKind } from '../store/types'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
@@ -12,12 +12,13 @@ export function TextPanel() {
   const { inputs, status } = useObsStore()
   const { text } = current
   const connected = status === 'connected'
+  const isFreeType = current.targets.textKind === 'text_ft2_source'
 
   return (
     <Panel
       title="Text Style"
       actions={
-        <button className={ghostButtonClass} disabled={!connected} onClick={() => void pushText(current)}>
+        <button className={ghostButtonClass} disabled={!connected} onClick={() => void withSyncErrors(pushText(current))}>
           Push now
         </button>
       }
@@ -58,9 +59,28 @@ export function TextPanel() {
       </Field>
       <Slider label="Font size" unit="px" value={text.fontSize} min={8} max={400} onChange={(v) => setText({ fontSize: v })} />
       <Slider label="Opacity" unit="%" value={text.opacity} min={0} max={100} onChange={(v) => setText({ opacity: v })} />
-      <Slider label="Outline size" unit="px" value={text.outlineSize} min={0} max={20} onChange={(v) => setText({ outlineSize: v })} />
       <ColorPicker label="Text color" value={text.color} onChange={(v) => setText({ color: v })} />
-      <ColorPicker label="Outline color" value={text.outlineColor} onChange={(v) => setText({ outlineColor: v })} />
+      {isFreeType ? (
+        <div className="space-y-1">
+          <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <input
+              type="checkbox"
+              checked={text.outlineSize > 0}
+              onChange={(e) => setText({ outlineSize: e.target.checked ? 4 : 0 })}
+            />
+            Outline
+          </label>
+          <p className="text-xs text-zinc-500">
+            FreeType 2 only supports a black outline that is either on or off, so outline color and size are not
+            available. Use a GDI+ text source for a custom outline.
+          </p>
+        </div>
+      ) : (
+        <>
+          <Slider label="Outline size" unit="px" value={text.outlineSize} min={0} max={20} onChange={(v) => setText({ outlineSize: v })} />
+          <ColorPicker label="Outline color" value={text.outlineColor} onChange={(v) => setText({ outlineColor: v })} />
+        </>
+      )}
     </Panel>
   )
 }

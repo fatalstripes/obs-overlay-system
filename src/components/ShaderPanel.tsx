@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { pushShader } from '../lib/sync'
+import { pushShader, withSyncErrors } from '../lib/sync'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { ColorPicker } from './ColorPicker'
@@ -35,7 +35,7 @@ export function ShaderPanel() {
     <Panel
       title="Shader Uniforms"
       actions={
-        <button className={ghostButtonClass} disabled={!connected} onClick={() => void pushShader(current)}>
+        <button className={ghostButtonClass} disabled={!connected} onClick={() => void withSyncErrors(pushShader(current))}>
           Push now
         </button>
       }

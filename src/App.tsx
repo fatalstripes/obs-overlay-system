@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { ConnectionPanel } from './components/ConnectionPanel'
+import { SyncErrorBanner } from './components/SyncErrorBanner'
 import { ShaderLibraryPanel } from './components/ShaderLibraryPanel'
 import { PresetPanel } from './components/PresetPanel'
 import { ShaderPanel } from './components/ShaderPanel'
@@ -11,6 +12,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-8">
+      <SyncErrorBanner />
       <h1 className="mb-6 text-2xl font-bold text-zinc-100">OBS Overlay Control</h1>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4">
