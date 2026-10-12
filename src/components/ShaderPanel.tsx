@@ -81,7 +81,7 @@ export function ShaderPanel() {
 
       {shaderOverride === 'off' && (
         <p role="alert" className="rounded-md bg-amber-950/60 px-3 py-2 text-xs text-amber-200">
-          "Override entire effect" isn't ticked on this filter. Open the filter's properties in OBS and tick it, or the
+          "Use Effect File (.effect)" isn't ticked on this filter. Open the filter's properties in OBS and tick it, or the
           shader won't load and the source will disappear. If it already looks ticked, delete the filter and re-add
           it with the box ticked from the start. Then press Refresh sources.
         </p>
