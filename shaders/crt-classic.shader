@@ -1,6 +1,9 @@
 // crt-classic.shader — scanlines, screen curvature and noise. obs-shaderfilter.
 // Library preset: CRT Classic.
 // Params: scanline_intensity, scanline_count (lines across the source height), curvature, noise
+// SETUP: in the filter's properties tick "Override entire effect". These files are complete effects;
+// with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
+// OBS logs "Not all shader parameters were set" and the source disappears.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;

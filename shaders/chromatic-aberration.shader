@@ -1,6 +1,9 @@
 // chromatic-aberration.shader — red/blue channel offset that grows toward the edges, plus vignette.
 // obs-shaderfilter. Library preset: Chromatic Aberration.
 // Params: offset (px), angle (degrees), vignette
+// SETUP: in the filter's properties tick "Override entire effect". These files are complete effects;
+// with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
+// OBS logs "Not all shader parameters were set" and the source disappears.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;

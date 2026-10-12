@@ -10,7 +10,7 @@ import { Slider } from './Slider'
 
 export function ShaderPanel() {
   const { current, setTargets, setUniformValue, addUniform, removeUniform } = usePresetStore()
-  const { inputs, filters, status, refreshFilters } = useObsStore()
+  const { inputs, filters, status, refreshFilters, refreshShaderOverride, shaderOverride } = useObsStore()
   const { shaderSource, shaderFilter } = current.targets
   const connected = status === 'connected'
 
@@ -27,6 +27,11 @@ export function ShaderPanel() {
       }
     })
   }, [connected, shaderSource, refreshFilters, setTargets])
+
+  useEffect(() => {
+    if (connected) void refreshShaderOverride(shaderSource, shaderFilter)
+    else useObsStore.setState({ shaderOverride: 'unknown' })
+  }, [connected, shaderSource, shaderFilter, refreshShaderOverride])
 
   const add = () => {
     const name = newName.trim()
@@ -71,6 +76,14 @@ export function ShaderPanel() {
       {(!shaderSource || !shaderFilter) && (
         <p className="text-xs text-amber-300">
           Choose the Source and Filter name before anything is sent to OBS. They must already exist in OBS (a source with a shader filter applied).
+        </p>
+      )}
+
+      {shaderOverride === 'off' && (
+        <p role="alert" className="rounded-md bg-amber-950/60 px-3 py-2 text-xs text-amber-200">
+          "Override entire effect" isn't ticked on this filter. Open the filter's properties in OBS and tick it, or the
+          shader won't load and the source will disappear. If it already looks ticked, delete the filter and re-add
+          it with the box ticked from the start. Then press Refresh sources.
         </p>
       )}
 

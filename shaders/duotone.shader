@@ -2,6 +2,9 @@
 // Library preset: Duotone.
 // Params: shadow_color, highlight_color, mix_amount, contrast
 // White text maps to highlight_color; dark areas map to shadow_color.
+// SETUP: in the filter's properties tick "Override entire effect". These files are complete effects;
+// with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
+// OBS logs "Not all shader parameters were set" and the source disappears.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;

@@ -2,6 +2,9 @@
 // Library preset: Heat Wave.
 // Params: wave_amplitude (fraction of the source size), wave_frequency, speed
 // NOTE: displacement pushes pixels past the source edge; leave a little empty room around the text.
+// SETUP: in the filter's properties tick "Override entire effect". These files are complete effects;
+// with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
+// OBS logs "Not all shader parameters were set" and the source disappears.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
