@@ -6,9 +6,16 @@ import { PresetPanel } from './components/PresetPanel'
 import { ShaderPanel } from './components/ShaderPanel'
 import { TextPanel } from './components/TextPanel'
 import { startLiveSync } from './lib/sync'
+import { useObsStore } from './store/useObsStore'
 
 export default function App() {
   useEffect(() => startLiveSync(), [])
+
+  // One-time setup: if we connected before (and didn't explicitly disconnect), reconnect on load.
+  useEffect(() => {
+    const { autoConnect, connect } = useObsStore.getState()
+    if (autoConnect) void connect()
+  }, [])
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-8">

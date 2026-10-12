@@ -10,6 +10,7 @@ export function ShaderLibraryPanel() {
   const connected = useObsStore((s) => s.status === 'connected')
   const [category, setCategory] = useState<ShaderCategory | 'All'>('All')
   const [appliedId, setAppliedId] = useState<string | null>(null)
+  const [note, setNote] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null)
 
   const entries = SHADER_LIBRARY.filter((e) => category === 'All' || e.category === category)
 
@@ -23,6 +24,18 @@ export function ShaderLibraryPanel() {
     if (connected) queueUniformReset(stale)
     applyUniforms(entry.uniforms)
     setAppliedId(id)
+
+    const { shaderSource, shaderFilter } = usePresetStore.getState().current.targets
+    if (!connected) {
+      setNote({ tone: 'warn', text: 'Not connected to OBS, so only the sliders here changed. Connect first.' })
+    } else if (!shaderSource || !shaderFilter) {
+      setNote({ tone: 'warn', text: 'Nothing was sent: set a Source and Filter name in Shader Uniforms first.' })
+    } else {
+      setNote({
+        tone: 'ok',
+        text: `Sent ${entry.uniforms.length} uniforms to "${shaderFilter}" on "${shaderSource}". OBS ignores names your shader doesn't declare, so if nothing changes, rename them to match your shader.`,
+      })
+    }
     // Live sync is a no-op when disabled, so push explicitly if connected and it's off.
     if (connected && !useObsStore.getState().liveSync) {
       void withSyncErrors(pushShader(usePresetStore.getState().current))
@@ -67,6 +80,11 @@ export function ShaderLibraryPanel() {
           </li>
         ))}
       </ul>
+      {note && (
+        <p className={`rounded-md px-3 py-2 text-xs ${note.tone === 'ok' ? 'bg-zinc-800 text-zinc-300' : 'bg-amber-950/60 text-amber-200'}`}>
+          {note.text}
+        </p>
+      )}
       <p className="text-xs text-zinc-500">
         Applying replaces the uniform list; source, filter and text settings are kept. Uniforms from the previous
         shader are reset to 0 / black in OBS. Names must match your shader — rename them afterwards if needed.
