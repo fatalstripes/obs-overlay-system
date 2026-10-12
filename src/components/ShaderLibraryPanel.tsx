@@ -1,0 +1,71 @@
+import { useState } from 'react'
+import { SHADER_CATEGORIES, SHADER_LIBRARY, type ShaderCategory } from '../lib/shaderLibrary'
+import { pushShader } from '../lib/sync'
+import { useObsStore } from '../store/useObsStore'
+import { usePresetStore } from '../store/usePresetStore'
+import { Panel, ghostButtonClass } from './Panel'
+
+export function ShaderLibraryPanel() {
+  const applyUniforms = usePresetStore((s) => s.applyUniforms)
+  const connected = useObsStore((s) => s.status === 'connected')
+  const [category, setCategory] = useState<ShaderCategory | 'All'>('All')
+  const [appliedId, setAppliedId] = useState<string | null>(null)
+
+  const entries = SHADER_LIBRARY.filter((e) => category === 'All' || e.category === category)
+
+  const apply = (id: string) => {
+    const entry = SHADER_LIBRARY.find((e) => e.id === id)
+    if (!entry) return
+    applyUniforms(entry.uniforms)
+    setAppliedId(id)
+    // Live sync is a no-op when disabled, so push explicitly if connected and it's off.
+    if (connected && !useObsStore.getState().liveSync) {
+      void pushShader(usePresetStore.getState().current)
+    }
+  }
+
+  return (
+    <Panel title="Shader Library">
+      <div className="flex flex-wrap gap-1.5">
+        {(['All', ...SHADER_CATEGORIES] as const).map((c) => (
+          <button
+            key={c}
+            onClick={() => setCategory(c)}
+            className={`rounded-full px-2.5 py-1 text-xs ${
+              category === c ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      <ul className="space-y-2">
+        {entries.map((e) => (
+          <li
+            key={e.id}
+            className={`rounded-md border px-3 py-2 ${
+              e.id === appliedId ? 'border-violet-500 bg-violet-500/10' : 'border-zinc-800'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-sm text-zinc-100">{e.name}</div>
+                <div className="text-xs text-zinc-500">{e.description}</div>
+              </div>
+              <button className={ghostButtonClass} onClick={() => apply(e.id)}>
+                Apply
+              </button>
+            </div>
+            <div className="mt-1 font-mono text-[10px] text-zinc-600">
+              {e.uniforms.map((u) => u.name).join(' · ')}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-zinc-500">
+        Applying replaces the uniform list; source, filter and text settings are kept. Uniform names must match your
+        shader — rename them afterwards if needed.
+      </p>
+    </Panel>
+  )
+}

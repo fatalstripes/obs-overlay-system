@@ -35,6 +35,8 @@ type PresetState = {
   setUniformValue: (name: string, value: number | string) => void
   addUniform: (uniform: Uniform) => void
   removeUniform: (name: string) => void
+  /** Replace all uniforms (e.g. from the shader library); targets and text are untouched. */
+  applyUniforms: (uniforms: Uniform[]) => void
   setText: (patch: Partial<TextStyle>) => void
 
   savePreset: (name: string) => void
@@ -75,6 +77,9 @@ export const usePresetStore = create<PresetState>()(
         set((s) => ({
           current: { ...s.current, uniforms: s.current.uniforms.filter((u) => u.name !== name) },
         })),
+
+      applyUniforms: (uniforms) =>
+        set((s) => ({ current: { ...s.current, uniforms: clone(uniforms) } })),
 
       setText: (patch) =>
         set((s) => ({ current: { ...s.current, text: { ...s.current.text, ...patch } } })),
