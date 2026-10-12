@@ -17,8 +17,15 @@ export function ShaderPanel() {
   const [newKind, setNewKind] = useState<'float' | 'color'>('float')
 
   useEffect(() => {
-    if (connected) void refreshFilters(shaderSource)
-  }, [connected, shaderSource, refreshFilters])
+    if (!connected) return
+    void refreshFilters(shaderSource).then((names) => {
+      // A source with exactly one filter is almost certainly the shader filter: fill it in.
+      const { shaderSource: current, shaderFilter: filter } = usePresetStore.getState().current.targets
+      if (current === shaderSource && names.length === 1 && !names.includes(filter)) {
+        setTargets({ shaderFilter: names[0] })
+      }
+    })
+  }, [connected, shaderSource, refreshFilters, setTargets])
 
   const add = () => {
     const name = newName.trim()
@@ -43,7 +50,7 @@ export function ShaderPanel() {
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Source">
           <input
-            className={inputClass}
+            className={`${inputClass} ${shaderSource ? '' : 'border-amber-500'}`}
             list="obs-inputs"
             value={shaderSource}
             onChange={(e) => setTargets({ shaderSource: e.target.value })}
@@ -52,13 +59,18 @@ export function ShaderPanel() {
         </Field>
         <Field label="Filter name">
           <input
-            className={inputClass}
+            className={`${inputClass} ${shaderFilter ? '' : 'border-amber-500'}`}
             list="obs-filters"
             value={shaderFilter}
             onChange={(e) => setTargets({ shaderFilter: e.target.value })}
           />
         </Field>
       </div>
+      {(!shaderSource || !shaderFilter) && (
+        <p className="text-xs text-amber-300">
+          Choose the Source (click the field to pick from OBS) and Filter name before anything is sent to OBS.
+        </p>
+      )}
       <datalist id="obs-inputs">{inputs.map((i) => <option key={i} value={i} />)}</datalist>
       <datalist id="obs-filters">{filters.map((f) => <option key={f} value={f} />)}</datalist>
 
