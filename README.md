@@ -157,6 +157,13 @@ Bind a saved preset to an OBS scene and the dashboard applies it whenever OBS sw
   OBS is already on a bound scene.
 - Studio Mode: only the *program* scene counts, not the preview scene.
 - Bindings follow scene renames made in OBS, and are removed when their preset is deleted.
+- A preset can also carry the **Custom ProText** settings. The Presets panel's **Include the Custom ProText overlay
+  settings** option decides: it ticks itself once you've changed the overlay from its defaults, and you can override
+  it. Presets that carry them show a **ProText** badge. Applying such a preset (by **Load**, by **Apply** in the
+  Scene Presets panel, or by a scene switch) restores the overlay's font, fill, stroke, lines and rotator along with the
+  shader and native text. A scene switch pushes it immediately even with live sync off; **Load** follows live sync like
+  any edit. A preset saved without them (including any saved before this existed) leaves the overlay as it is.
+  Saving under an existing name replaces the whole preset, so unticking the option drops its ProText snapshot.
 - Only values that are valid are sent. A uniform with no usable value is left out of the payload instead of being
   written as 0, and uniforms that a newly applied shader doesn't declare are not touched in OBS.
 
@@ -189,5 +196,5 @@ are ignored, and everything the overlay receives is validated and clamped before
   name under **Other…**. If a family doesn't offer the chosen weight, it falls back to the family's default styles.
 - With the rotator **off**, all lines are shown stacked; **on**, one at a time (sequential or random).
 - It's one shared channel: every text-engine overlay on this OBS shows the same settings.
-- It is a separate source from the native-text controls above. Preset and scene binding don't drive it yet.
+- It is a separate source from the native-text controls above, but presets can carry its settings: see "Scene presets" below.
 

@@ -67,6 +67,10 @@ export const TRANSITIONS: { value: TransitionKind; label: string }[] = [
   { value: 'blur', label: 'Blur' },
 ]
 
+/** True when `s` is exactly the factory defaults (used to decide whether a preset should bother carrying them). */
+export const isDefaultSettings = (s: TextEngineSettings): boolean =>
+  JSON.stringify(sanitizeSettings(s)) === JSON.stringify(DEFAULT_SETTINGS)
+
 export const MAX_LINES = 50
 export const MAX_LINE_LENGTH = 200
 

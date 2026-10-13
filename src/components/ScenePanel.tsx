@@ -25,8 +25,8 @@ export function ScenePanel() {
       }
     >
       <p className="text-xs text-zinc-500">
-        Bind a saved preset to a scene. When OBS switches to that scene, its shader and text settings are pushed
-        automatically.
+        Bind a saved preset to a scene. When OBS switches to that scene, its shader and text settings (and its Custom
+        ProText overlay settings, if it has them) are pushed automatically.
       </p>
       {presets.length === 0 ? (
         <p className="text-sm text-zinc-500">Save a preset first, then bind it to a scene here.</p>
@@ -64,6 +64,7 @@ export function ScenePanel() {
                     {presets.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
+                        {p.textEngine ? ' · ProText' : ''}
                       </option>
                     ))}
                   </select>

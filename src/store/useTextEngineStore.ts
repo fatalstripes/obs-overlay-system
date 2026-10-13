@@ -9,6 +9,8 @@ type TextEngineState = {
   /** When the dashboard last broadcast settings. */
   lastSentAt: number | null
 
+  /** Replaces all settings (validated), e.g. when a preset is applied. */
+  setSettings: (settings: TextEngineSettings) => void
   update: (patch: Partial<TextEngineSettings>) => void
   updateGradient: (patch: Partial<TextEngineSettings['gradient']>) => void
   updateRotator: (patch: Partial<TextEngineSettings['rotator']>) => void
@@ -27,6 +29,7 @@ export const useTextEngineStore = create<TextEngineState>()(
       lastAckAt: null,
       lastSentAt: null,
 
+      setSettings: (settings) => set({ settings: sanitizeSettings(settings) }),
       update: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       updateGradient: (patch) => set((s) => ({ settings: { ...s.settings, gradient: { ...s.settings.gradient, ...patch } } })),
       updateRotator: (patch) => set((s) => ({ settings: { ...s.settings, rotator: { ...s.settings.rotator, ...patch } } })),
