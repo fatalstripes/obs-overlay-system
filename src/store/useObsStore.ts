@@ -20,6 +20,10 @@ type ObsState = {
   autoConnect: boolean
   inputs: string[]
   filters: string[]
+  /** OBS's current program scene (null until known / when disconnected). */
+  currentScene: string | null
+  /** Scene names, in the same order as OBS's scene list. */
+  scenes: string[]
   /** Whether the chosen shader filter has "Use Effect File (.effect)" ticked (the `override_entire_effect` setting) ('unknown' if it isn't a shader filter). */
   shaderOverride: 'on' | 'off' | 'unknown'
   /** Whether the chosen shader filter is switched on in OBS (the eye icon); null if it can't be found. */
@@ -33,6 +37,8 @@ type ObsState = {
   connect: () => Promise<void>
   disconnect: () => Promise<void>
   refreshInputs: () => Promise<void>
+  /** Loads the scene list and the current program scene. */
+  refreshScenes: () => Promise<void>
   /** Loads the source's filters into the store and returns their names. */
   refreshFilters: (source: string) => Promise<string[]>
   refreshShaderOverride: (source: string, filter: string) => Promise<void>
@@ -52,6 +58,8 @@ export const useObsStore = create<ObsState>()(
       autoConnect: false,
       inputs: [],
       filters: [],
+      currentScene: null,
+      scenes: [],
       shaderOverride: 'unknown',
       shaderEnabled: null,
 
@@ -69,6 +77,7 @@ export const useObsStore = create<ObsState>()(
           await obs.connect(url, password || undefined)
           set({ status: 'connected', autoConnect: true })
           await get().refreshInputs()
+          await get().refreshScenes()
         } catch (e) {
           set({ status: 'disconnected', error: e instanceof Error ? e.message : String(e) })
         }
@@ -83,6 +92,15 @@ export const useObsStore = create<ObsState>()(
       refreshInputs: async () => {
         const { inputs } = await obs.call('GetInputList')
         set({ inputs: inputs.map((i) => String(i.inputName)) })
+      },
+
+      refreshScenes: async () => {
+        const { scenes, currentProgramSceneName } = await obs.call('GetSceneList')
+        // obs-websocket lists scenes bottom-up; reverse to match the order in OBS's Scenes dock.
+        set({
+          scenes: scenes.map((s) => String(s.sceneName)).reverse(),
+          currentScene: currentProgramSceneName,
+        })
       },
 
       refreshFilters: async (source) => {
@@ -131,5 +149,13 @@ export const useObsStore = create<ObsState>()(
 )
 
 obs.on('ConnectionClosed', () => {
-  useObsStore.setState({ status: 'disconnected', inputs: [], filters: [], shaderOverride: 'unknown', shaderEnabled: null })
+  useObsStore.setState({
+    status: 'disconnected',
+    inputs: [],
+    filters: [],
+    currentScene: null,
+    scenes: [],
+    shaderOverride: 'unknown',
+    shaderEnabled: null,
+  })
 })
