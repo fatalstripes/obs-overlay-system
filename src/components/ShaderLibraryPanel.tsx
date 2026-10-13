@@ -81,8 +81,7 @@ export function ShaderLibraryPanel() {
         </p>
       )}
       <p className="text-xs text-zinc-500">
-        Applying replaces the uniform list; source, filter and text settings are kept. Uniforms from the previous
-        shader are reset to 0 / black in OBS. Each preset only does something when the filter on your source loads the
+        Applying replaces the uniform list; source, filter and text settings are kept. Each preset only does something when the filter on your source loads the
         shader file shown on its card, with "Use Effect File (.effect)" ticked.
       </p>
     </Panel>

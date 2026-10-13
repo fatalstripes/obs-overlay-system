@@ -1,15 +1,20 @@
 import { useEffect } from 'react'
 import { ConnectionPanel } from './components/ConnectionPanel'
 import { SyncErrorBanner } from './components/SyncErrorBanner'
+import { ScenePanel } from './components/ScenePanel'
 import { ShaderLibraryPanel } from './components/ShaderLibraryPanel'
 import { PresetPanel } from './components/PresetPanel'
 import { ShaderPanel } from './components/ShaderPanel'
 import { TextPanel } from './components/TextPanel'
+import { startSceneBinding } from './lib/sceneBinding'
 import { startLiveSync } from './lib/sync'
 import { useObsStore } from './store/useObsStore'
 
 export default function App() {
   useEffect(() => startLiveSync(), [])
+
+  // Follow OBS's program scene. Registered before the auto-connect below so its first scene isn't missed.
+  useEffect(() => startSceneBinding(), [])
 
   // One-time setup: if we connected before (and didn't explicitly disconnect), reconnect on load.
   useEffect(() => {
@@ -25,6 +30,7 @@ export default function App() {
         <div className="space-y-4">
           <ConnectionPanel />
           <PresetPanel />
+          <ScenePanel />
           <ShaderLibraryPanel />
         </div>
         <ShaderPanel />

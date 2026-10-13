@@ -30,6 +30,10 @@ type PresetState = {
   current: PresetValues
   presets: Preset[]
   activePresetId: string | null
+  /** OBS scene name -> preset id. When that scene becomes the program scene, the preset is applied. */
+  sceneBindings: Record<string, string>
+  /** Apply the bound preset automatically when OBS switches scenes. */
+  sceneAutoApply: boolean
 
   setTargets: (patch: Partial<Targets>) => void
   setUniformValue: (name: string, value: number | string | boolean) => void
@@ -42,6 +46,12 @@ type PresetState = {
   savePreset: (name: string) => void
   loadPreset: (id: string) => void
   deletePreset: (id: string) => void
+
+  /** Binds a preset to a scene; `null` removes the binding. */
+  bindScene: (scene: string, presetId: string | null) => void
+  /** Keeps a binding when a scene is renamed in OBS. */
+  renameScene: (from: string, to: string) => void
+  setSceneAutoApply: (on: boolean) => void
 }
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T
@@ -52,6 +62,8 @@ export const usePresetStore = create<PresetState>()(
       current: defaultValues(),
       presets: [],
       activePresetId: null,
+      sceneBindings: {},
+      sceneAutoApply: true,
 
       setTargets: (patch) =>
         set((s) => ({ current: { ...s.current, targets: { ...s.current.targets, ...patch } } })),
@@ -110,7 +122,25 @@ export const usePresetStore = create<PresetState>()(
         set((s) => ({
           presets: s.presets.filter((p) => p.id !== id),
           activePresetId: s.activePresetId === id ? null : s.activePresetId,
+          // a binding to a deleted preset would point at nothing
+          sceneBindings: Object.fromEntries(Object.entries(s.sceneBindings).filter(([, pid]) => pid !== id)),
         })),
+
+      bindScene: (scene, presetId) =>
+        set((s) => {
+          const { [scene]: _removed, ...rest } = s.sceneBindings
+          return { sceneBindings: presetId ? { ...rest, [scene]: presetId } : rest }
+        }),
+
+      renameScene: (from, to) =>
+        set((s) => {
+          const id = s.sceneBindings[from]
+          if (!id || from === to) return s
+          const { [from]: _removed, ...rest } = s.sceneBindings
+          return { sceneBindings: { ...rest, [to]: id } }
+        }),
+
+      setSceneAutoApply: (sceneAutoApply) => set({ sceneAutoApply }),
     }),
     { name: 'obs-overlay-presets' },
   ),

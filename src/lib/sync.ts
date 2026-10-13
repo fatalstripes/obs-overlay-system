@@ -1,45 +1,16 @@
 import { hexToObsColor } from './color'
 import { obs, useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
+import { buildFilterSettings, sanitizeUniforms } from './payload'
 import type { PresetValues, Uniform } from '../store/types'
 
-const neutralValue = (u: Uniform): number | boolean => {
-  if (u.kind === 'color') return hexToObsColor('#000000')
-  if (u.kind === 'bool') return false
-  return 0
-}
-
-/** The value as OBS expects it in filter settings: ABGR int for colors, true integers for ints. */
-const obsValue = (u: Uniform): number | boolean => {
-  if (u.kind === 'color') return hexToObsColor(u.value)
-  if (u.kind === 'int') return Math.round(u.value)
-  return u.value
-}
-
 /**
- * Uniforms left over from a previously applied shader. OBS merges filter settings, so the old
- * values would otherwise linger; they ride along with the next shader push set to neutral values.
- * Names that are also in the live uniform list are never overridden.
- */
-let pendingReset: Uniform[] = []
-
-export function queueUniformReset(stale: Uniform[]) {
-  // Accumulate: a failed push keeps its resets, and a quick A -> B -> C apply must reset both A and B.
-  const byName = new Map(pendingReset.map((u) => [u.name, u]))
-  for (const u of stale) byName.set(u.name, u)
-  pendingReset = [...byName.values()]
-}
-
-/**
- * Replaces the uniform list (library preset or imported shader). Uniforms from the previous list that the
- * new one doesn't declare are reset to neutral values in OBS with the next push, so stale values can't
- * linger in the filter's settings.
+ * Replaces the uniform list (library preset or imported shader). Entries without a usable name or value are
+ * dropped. Uniforms of the previous list that the new one doesn't declare are simply no longer sent; nothing
+ * is written to OBS for them (no zero-filling).
  */
 export function applyUniformSet(next: Uniform[]) {
-  const names = new Set(next.map((u) => u.name))
-  const stale = usePresetStore.getState().current.uniforms.filter((u) => !names.has(u.name))
-  if (useObsStore.getState().status === 'connected') queueUniformReset(stale)
-  usePresetStore.getState().applyUniforms(next)
+  usePresetStore.getState().applyUniforms(sanitizeUniforms(next))
 }
 
 export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -57,20 +28,14 @@ export async function withSyncErrors(job: Promise<unknown>) {
 export async function pushShader(v: PresetValues) {
   const { shaderSource, shaderFilter } = v.targets
   if (!shaderSource || !shaderFilter) return
-  const filterSettings: Record<string, number | boolean> = {}
-  const reset = pendingReset
-  for (const u of reset) filterSettings[u.name] = neutralValue(u)
-  for (const u of v.uniforms) {
-    filterSettings[u.name] = obsValue(u)
-  }
+  const filterSettings = buildFilterSettings(v.uniforms)
+  if (Object.keys(filterSettings).length === 0) return
   await obs.call('SetSourceFilterSettings', {
     sourceName: shaderSource,
     filterName: shaderFilter,
     filterSettings,
     overlay: true,
   })
-  // Only forget the reset once OBS accepted it; a failed push retries it next time.
-  if (pendingReset === reset) pendingReset = []
 }
 
 export async function pushText(v: PresetValues) {
@@ -104,6 +69,18 @@ export async function pushAll(v: PresetValues) {
   await Promise.all([pushShader(v), pushText(v)])
 }
 
+let liveSyncSuppressed = 0
+
+/** Runs `fn` without live sync reacting to the store changes it makes (the caller pushes explicitly). */
+export function withoutLiveSync<T>(fn: () => T): T {
+  liveSyncSuppressed++
+  try {
+    return fn()
+  } finally {
+    liveSyncSuppressed--
+  }
+}
+
 /**
  * Subscribes to preset changes and forwards only the part that changed.
  * Trailing-throttled so dragging a slider doesn't flood the socket.
@@ -126,7 +103,7 @@ export function startLiveSync(intervalMs = 50): () => void {
   }
 
   const unsub = usePresetStore.subscribe((s, prev) => {
-    if (!useObsStore.getState().liveSync) return
+    if (liveSyncSuppressed || !useObsStore.getState().liveSync) return
     if (s.current === prev.current) return
     if (s.current.uniforms !== prev.current.uniforms || s.current.targets !== prev.current.targets) {
       dirtyShader = true
