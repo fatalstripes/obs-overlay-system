@@ -5,9 +5,13 @@
 // SETUP: in the filter's properties tick "Use Effect File (.effect)". These files are complete effects;
 // with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
 // OBS logs "Not all shader parameters were set" and the source disappears.
+// EXTRA ROOM: the filter's "Extra pixels on left/right/top/bottom" are supported: they enlarge the drawing area
+// without stretching the source, and the effect can spread into it.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
 
 uniform float4 shadow_color<
     string label = "Shadow Color";
@@ -51,7 +55,10 @@ VertData mainTransform(VertData v_in)
 {
     VertData vert_out;
     vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
-    vert_out.uv  = v_in.uv;
+    // With the filter's "Extra pixels on left/right/top/bottom" set, the drawing area is larger than the source;
+    // uv_scale / uv_offset map it back onto the source (identity when the extras are 0), so the source isn't
+    // stretched and the effect can spread into the extra room. Done here, once: v_in.uv is already in source coordinates.
+    vert_out.uv  = v_in.uv * uv_scale + uv_offset;
     return vert_out;
 }
 
