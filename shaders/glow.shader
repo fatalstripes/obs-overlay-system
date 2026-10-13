@@ -62,7 +62,10 @@ VertData mainTransform(VertData v_in)
 {
     VertData vert_out;
     vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
-    vert_out.uv  = v_in.uv;
+    // With the filter's "Extra pixels on left/right/top/bottom" set, the drawing area is larger than the source;
+    // uv_scale / uv_offset map its coordinates back onto the source (identity when the extras are 0), so the
+    // glow can spread beyond the text's own box. Done here, once, so v_in.uv is already in source coordinates.
+    vert_out.uv  = v_in.uv * uv_scale + uv_offset;
     return vert_out;
 }
 
@@ -74,10 +77,7 @@ float pixel_noise(float2 p)
 
 float4 mainImage(VertData v_in) : TARGET
 {
-    // With the filter's "Extra pixels on left/right/top/bottom" set, the drawing area is larger than the source;
-    // uv_scale / uv_offset map its coordinates back onto the source (identity when the extras are 0), so the
-    // glow can spread beyond the text's own box instead of being cut off at it.
-    float2 uv = v_in.uv * uv_scale + uv_offset;
+    float2 uv = v_in.uv;
     float4 base = image.Sample(textureSampler, uv);
 
     // Blur the alpha channel over a disk of radius glow_size. The taps follow a golden-angle spiral, which
