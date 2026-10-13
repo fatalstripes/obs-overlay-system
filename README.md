@@ -91,3 +91,50 @@ Tips:
 - Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
 - A source that vanishes when you add the filter almost always means **Use Effect File (.effect)** is unticked.
 - If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.
+
+## Importing your own shader
+
+You don't need the library to use a shader. In **Shader Uniforms**, drop a `.shader` / `.effect` file onto the
+dashed area (or press **Import shader…**). The dashboard reads the file's `uniform` declarations and builds the
+controls for you, then keeps them in sync with the filter on your source:
+
+| Declaration       | Control                | Sent to OBS as                |
+| ----------------- | ---------------------- | ----------------------------- |
+| `uniform float`   | range slider           | number                        |
+| `uniform int`     | range slider (whole)   | integer                       |
+| `uniform bool`    | on/off toggle          | `true` / `false`              |
+| `uniform float4`  | color picker           | ABGR integer (`0xAABBGGRR`)   |
+
+- Defaults come from the `= value` after the declaration. Slider ranges come from the `minimum`, `maximum` and
+  `step` annotations and the label from `string label`; with no annotations the range is guessed from the default.
+- obs-shaderfilter's own uniforms (`ViewProj`, `image`, `elapsed_time`, `uv_*`, `rand_*`, …) are ignored. Other types
+  (`float2`, `float3`, `texture2d`, …) have no control and are listed after the import.
+- A `float4` without `widget_type = "color"` still becomes a color picker, with a warning, because OBS may store it
+  differently.
+- Importing replaces the current uniform list. Uniforms from the previous list that the new shader doesn't declare
+  are reset to 0 / false / black in OBS with the next push.
+- The shader file in OBS still needs **Use Effect File (.effect)** ticked, as above.
+
+`npm test` runs the parser's tests, including a check that every bundled shader parses to exactly the controls its
+library presets expect.
+
+### Checking that OBS really uses int / bool values
+
+`scripts/verify-shader-types.mjs` pushes raw `int`, `bool`, `float` and color values to a shader filter on your
+live OBS and checks that obs-shaderfilter both **stored** them and **rendered** them. The probe shader
+(`scripts/type-probe.shader`) paints its output from those uniforms, and the script reads the result back with
+`GetSourceScreenshot`, so a silently dropped value shows up as a missing color.
+
+```
+npm run verify:obs-types -- --create --yes
+```
+
+`--create` builds a throwaway scene, color source and shader filter (named `ZZ overlay probe …`), runs the checks
+and deletes them. To use a filter you already set up instead, pass `--source "…" --filter "…"`; its settings are saved first and
+restored afterwards. That filter must be **created fresh with `scripts/type-probe.shader` loaded from the start**
+(User-defined shader, shader text file = the probe, **Use Effect File (.effect)** ticked). Don't point an
+existing filter at the probe through the API or by editing it: OBS keeps running the old shader, and the script
+will correctly report that the baseline isn't black. Without `--yes` it only prints what it would do. Other options:
+`--url ws://localhost:4455`, `--password …` (or `OBS_PASSWORD`), `--kind <filterKind>`, `--keep`. Run it on the
+machine running OBS. It uses the JSON wire encoding, the same as the dashboard.
+

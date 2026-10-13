@@ -1,20 +1,32 @@
-export type NumberUniform = {
-  kind: 'float'
+type UniformBase = {
   name: string
+  /** Display label from the shader's `string label = ...` annotation, if it has one. */
+  label?: string
+}
+
+/** `float` and `int` uniforms, shown as range sliders. */
+export type NumberUniform = UniformBase & {
+  kind: 'float' | 'int'
   value: number
   min: number
   max: number
   step: number
 }
 
-export type ColorUniform = {
+/** `float4` uniforms, shown as color pickers and sent to OBS as ABGR integers. */
+export type ColorUniform = UniformBase & {
   kind: 'color'
-  name: string
   /** `#rrggbb` */
   value: string
 }
 
-export type Uniform = NumberUniform | ColorUniform
+/** `bool` uniforms, shown as toggle switches. */
+export type BoolUniform = UniformBase & {
+  kind: 'bool'
+  value: boolean
+}
+
+export type Uniform = NumberUniform | ColorUniform | BoolUniform
 
 export type TextKind = 'text_gdiplus' | 'text_ft2_source'
 

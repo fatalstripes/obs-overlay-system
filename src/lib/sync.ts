@@ -3,7 +3,18 @@ import { obs, useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import type { PresetValues, Uniform } from '../store/types'
 
-const neutralValue = (u: Uniform): number => (u.kind === 'color' ? hexToObsColor('#000000') : 0)
+const neutralValue = (u: Uniform): number | boolean => {
+  if (u.kind === 'color') return hexToObsColor('#000000')
+  if (u.kind === 'bool') return false
+  return 0
+}
+
+/** The value as OBS expects it in filter settings: ABGR int for colors, true integers for ints. */
+const obsValue = (u: Uniform): number | boolean => {
+  if (u.kind === 'color') return hexToObsColor(u.value)
+  if (u.kind === 'int') return Math.round(u.value)
+  return u.value
+}
 
 /**
  * Uniforms left over from a previously applied shader. OBS merges filter settings, so the old
@@ -17,6 +28,18 @@ export function queueUniformReset(stale: Uniform[]) {
   const byName = new Map(pendingReset.map((u) => [u.name, u]))
   for (const u of stale) byName.set(u.name, u)
   pendingReset = [...byName.values()]
+}
+
+/**
+ * Replaces the uniform list (library preset or imported shader). Uniforms from the previous list that the
+ * new one doesn't declare are reset to neutral values in OBS with the next push, so stale values can't
+ * linger in the filter's settings.
+ */
+export function applyUniformSet(next: Uniform[]) {
+  const names = new Set(next.map((u) => u.name))
+  const stale = usePresetStore.getState().current.uniforms.filter((u) => !names.has(u.name))
+  if (useObsStore.getState().status === 'connected') queueUniformReset(stale)
+  usePresetStore.getState().applyUniforms(next)
 }
 
 export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
@@ -34,11 +57,11 @@ export async function withSyncErrors(job: Promise<unknown>) {
 export async function pushShader(v: PresetValues) {
   const { shaderSource, shaderFilter } = v.targets
   if (!shaderSource || !shaderFilter) return
-  const filterSettings: Record<string, number> = {}
+  const filterSettings: Record<string, number | boolean> = {}
   const reset = pendingReset
   for (const u of reset) filterSettings[u.name] = neutralValue(u)
   for (const u of v.uniforms) {
-    filterSettings[u.name] = u.kind === 'color' ? hexToObsColor(u.value) : u.value
+    filterSettings[u.name] = obsValue(u)
   }
   await obs.call('SetSourceFilterSettings', {
     sourceName: shaderSource,
