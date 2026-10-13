@@ -3,6 +3,7 @@ import { sendTextSettings } from '../lib/textBridge'
 import { withSyncErrors } from '../lib/sync'
 import { buildOverlayUrl, POPULAR_FONTS, TRANSITIONS, isFontFamily, type Align } from '../lib/textEngine'
 import { useObsStore } from '../store/useObsStore'
+import { usePresetStore } from '../store/usePresetStore'
 import { useTextEngineStore } from '../store/useTextEngineStore'
 import { ColorPicker } from './ColorPicker'
 import { Field } from './Field'
@@ -46,6 +47,36 @@ function PreviewStage() {
       >
         <TextEngineView settings={settings} />
       </div>
+    </div>
+  )
+}
+
+/** Says where an edit goes right now: into the live scene's preset, or just the shared overlay. */
+function SceneContext() {
+  const { status, currentScene } = useObsStore()
+  const { presets, sceneBindings, sceneAutoApply } = usePresetStore()
+  const autoSave = useTextEngineStore((s) => s.autoSaveToScene)
+  const setAutoSave = useTextEngineStore((s) => s.setAutoSaveToScene)
+  if (status !== 'connected' || !currentScene) return null
+
+  const preset = presets.find((p) => p.id === sceneBindings[currentScene])
+  let body: string
+  if (!sceneAutoApply) {
+    body = 'Scene auto-apply is off, so edits only change the live overlay (shared by every scene).'
+  } else if (!preset) {
+    body = `Scene “${currentScene}” has no preset. Edits change the overlay for every scene. Save a preset and bind it to this scene (Scene Presets) to give the scene its own text.`
+  } else if (autoSave) {
+    body = `Editing scene “${currentScene}”: changes are saved into its preset “${preset.name}”, so other scenes keep their own text.`
+  } else {
+    body = `Auto-save is off: edits change the live overlay for every scene and are not saved into “${preset.name}”.`
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400">
+      <span>{body}</span>
+      {sceneAutoApply && preset && (
+        <Switch label="Auto-save" checked={autoSave} onChange={setAutoSave} />
+      )}
     </div>
   )
 }
@@ -102,6 +133,7 @@ export function CustomTextPanel() {
         </div>
       }
     >
+      <SceneContext />
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">

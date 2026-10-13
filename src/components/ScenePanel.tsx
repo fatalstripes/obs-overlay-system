@@ -1,11 +1,13 @@
 import { applyPresetNow } from '../lib/sceneBinding'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
+import { useTextEngineStore } from '../store/useTextEngineStore'
 import { Panel, ghostButtonClass, inputClass } from './Panel'
 import { Switch } from './Switch'
 
 export function ScenePanel() {
-  const { presets, sceneBindings, sceneAutoApply, bindScene, setSceneAutoApply } = usePresetStore()
+  const { presets, sceneBindings, sceneAutoApply, bindScene, setSceneAutoApply, setPresetTextEngine } = usePresetStore()
+  const overlay = useTextEngineStore((s) => s.settings)
   const { scenes, currentScene, status } = useObsStore()
   const connected = status === 'connected'
 
@@ -77,6 +79,17 @@ export function ScenePanel() {
                     Apply
                   </button>
                 </div>
+                {bound && !presets.find((p) => p.id === bound)?.textEngine && (
+                  <p className="flex items-center justify-between gap-2 text-xs text-amber-300">
+                    <span>No overlay (ProText) settings in this preset, so the overlay keeps whatever it shows when this scene goes live.</span>
+                    <button
+                      className="shrink-0 underline hover:text-amber-100"
+                      onClick={() => setPresetTextEngine(bound, overlay)}
+                    >
+                      Save current overlay into it
+                    </button>
+                  </p>
+                )}
               </li>
             )
           })}

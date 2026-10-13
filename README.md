@@ -164,6 +164,13 @@ Bind a saved preset to an OBS scene and the dashboard applies it whenever OBS sw
   shader and native text. A scene switch pushes it immediately even with live sync off; **Load** follows live sync like
   any edit. A preset saved without them (including any saved before this existed) leaves the overlay as it is.
   Saving under an existing name replaces the whole preset, so unticking the option drops its ProText snapshot.
+- **Each scene keeps its own overlay text.** The overlay is one shared source, so a plain edit would change it for every
+  scene. To avoid that, edits you make in the Custom ProText panel while a scene with a bound preset is live are saved
+  into that preset (a moment after you stop typing), and switching scenes brings each scene's own text back. The panel
+  says which scene and preset an edit goes to, and has an **Auto-save** switch: turn it off and edits only change the
+  live overlay until you switch scenes. If the live scene has no preset (or auto-apply is off) edits change the overlay
+  for every scene. A bound preset that has no overlay settings yet is flagged in the Scene Presets panel, with a button
+  to save the current overlay into it. Loading a preset is not an edit, so it never overwrites another scene's preset.
 - Only values that are valid are sent. A uniform with no usable value is left out of the payload instead of being
   written as 0, and uniforms that a newly applied shader doesn't declare are not touched in OBS.
 

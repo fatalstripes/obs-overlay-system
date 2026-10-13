@@ -48,6 +48,8 @@ type PresetState = {
   savePreset: (name: string, textEngine?: TextEngineSettings) => void
   loadPreset: (id: string) => void
   deletePreset: (id: string) => void
+  /** Replaces just the Custom ProText snapshot of one preset (validated copy); other values are untouched. */
+  setPresetTextEngine: (id: string, textEngine: TextEngineSettings) => void
 
   /** Binds a preset to a scene; `null` removes the binding. */
   bindScene: (scene: string, presetId: string | null) => void
@@ -133,6 +135,15 @@ export const usePresetStore = create<PresetState>()(
           // a binding to a deleted preset would point at nothing
           sceneBindings: Object.fromEntries(Object.entries(s.sceneBindings).filter(([, pid]) => pid !== id)),
         })),
+
+      setPresetTextEngine: (id, textEngine) =>
+        set((s) => {
+          const next = sanitizeSettings(clone(textEngine))
+          const target = s.presets.find((p) => p.id === id)
+          // no change, no write: keeps storage quiet while a slider is dragged back and forth
+          if (!target || JSON.stringify(target.textEngine) === JSON.stringify(next)) return s
+          return { presets: s.presets.map((p) => (p.id === id ? { ...p, textEngine: next } : p)) }
+        }),
 
       bindScene: (scene, presetId) =>
         set((s) => {
