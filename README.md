@@ -117,3 +117,22 @@ controls for you, then keeps them in sync with the filter on your source:
 
 `npm test` runs the parser's tests, including a check that every bundled shader parses to exactly the controls its
 library presets expect.
+
+### Checking that OBS really uses int / bool values
+
+`scripts/verify-shader-types.mjs` pushes raw `int`, `bool`, `float` and color values to a shader filter on your
+live OBS and checks that obs-shaderfilter both **stored** them and **rendered** them. The probe shader
+(`scripts/type-probe.shader`) paints its output from those uniforms, and the script reads the result back with
+`GetSourceScreenshot`, so a silently dropped value shows up as a missing color.
+
+```
+npm run verify:obs-types -- --create --yes
+```
+
+`--create` builds a throwaway scene, color source and shader filter (named `ZZ overlay probe …`), runs the checks
+and deletes them. To use a filter you already set up instead (User-defined shader loading
+`scripts/type-probe.shader`, with **Use Effect File (.effect)** ticked), pass `--source "…" --filter "…"`; its
+settings are saved first and restored afterwards. Without `--yes` it only prints what it would do. Other options:
+`--url ws://localhost:4455`, `--password …` (or `OBS_PASSWORD`), `--kind <filterKind>`, `--keep`. Run it on the
+machine running OBS. It uses the JSON wire encoding, the same as the dashboard.
+
