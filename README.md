@@ -84,8 +84,10 @@ Setup in OBS:
    then press **Apply** on the matching preset.
 
 Tips:
-- Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
-  source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
+- Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds unless the filter
+  has room. In the filter's properties set **Extra pixels on left / right / top / bottom** (for Glow, at least the glow
+  size); every bundled shader maps its coordinates for that, so the source isn't stretched. Confirmed on a live OBS
+  for Glow. Giving the source empty room (a larger custom text extent, or a bigger scene/group) works too.
 - The **Filter on/off** switch in the Shader Uniforms panel turns the filter on or off in OBS (the eye icon) and follows
   changes made in OBS. **Push now** and live sync only send values; they never switch the filter on.
 - Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.

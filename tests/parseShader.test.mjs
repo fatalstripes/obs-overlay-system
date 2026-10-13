@@ -96,3 +96,15 @@ test('handles missing defaults, duplicates and empty input', () => {
   assert.equal(dup.uniforms[0].value, 0)
   assert.deepEqual(parseShaderUniforms('float4 mainImage() { return 0; }').uniforms, [])
 })
+
+test('every bundled shader maps uv_scale / uv_offset once, in the vertex stage (so "Extra pixels" works)', () => {
+  for (const file of readdirSync(shaderDir).filter((f) => f.endsWith('.shader'))) {
+    const src = readFileSync(new URL(file, shaderDir), 'utf8').replace(/\/\/.*/g, '')
+    assert.match(src, /uniform float2 uv_offset;/, `${file} declares uv_offset`)
+    assert.match(src, /uniform float2 uv_scale;/, `${file} declares uv_scale`)
+    const transform = /VertData mainTransform[\s\S]*?\n}/.exec(src)?.[0] ?? ''
+    assert.match(transform, /vert_out\.uv\s*=\s*v_in\.uv\s*\*\s*uv_scale\s*\+\s*uv_offset;/, `${file} maps uv in mainTransform`)
+    const pixel = /float4 mainImage[\s\S]*?\n}/.exec(src)?.[0] ?? ''
+    assert.doesNotMatch(pixel, /uv_scale|uv_offset/, `${file} must not map again in mainImage (that stretches the source)`)
+  }
+})

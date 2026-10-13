@@ -2,12 +2,17 @@
 // Library preset: Glitch Burst.
 // Params: glitch_amount (fraction of slices hit), block_size (slice height, px), rgb_split (px), speed (changes per second)
 // Photosensitivity: keep speed low (<= 4) if you or your viewers are sensitive to flicker.
+// NOTE: slices slide sideways by up to a quarter of the source width; use Extra pixels on left/right to see them in full.
 // SETUP: in the filter's properties tick "Use Effect File (.effect)". These files are complete effects;
 // with it unticked, obs-shaderfilter wraps them in its own template, the uniforms are declared twice,
 // OBS logs "Not all shader parameters were set" and the source disappears.
+// EXTRA ROOM: the filter's "Extra pixels on left/right/top/bottom" are supported: they enlarge the drawing area
+// without stretching the source, and the effect can spread into it.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
 uniform float elapsed_time;
 uniform float2 uv_size;
 uniform float2 uv_pixel_interval;
@@ -60,7 +65,10 @@ VertData mainTransform(VertData v_in)
 {
     VertData vert_out;
     vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
-    vert_out.uv  = v_in.uv;
+    // With the filter's "Extra pixels on left/right/top/bottom" set, the drawing area is larger than the source;
+    // uv_scale / uv_offset map it back onto the source (identity when the extras are 0), so the source isn't
+    // stretched and the effect can spread into the extra room. Done here, once: v_in.uv is already in source coordinates.
+    vert_out.uv  = v_in.uv * uv_scale + uv_offset;
     return vert_out;
 }
 
