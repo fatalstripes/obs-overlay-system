@@ -159,3 +159,35 @@ Bind a saved preset to an OBS scene and the dashboard applies it whenever OBS sw
 - Bindings follow scene renames made in OBS, and are removed when their preset is deleted.
 - Only values that are valid are sent. A uniform with no usable value is left out of the payload instead of being
   written as 0, and uniforms that a newly applied shader doesn't declare are not touched in OBS.
+
+## Custom ProText (text overlay)
+
+A text engine that runs as an OBS **Browser Source**, in the spirit of StreamUP ProText but driven from this dashboard:
+any Google Font, a stroke, a solid or gradient fill, and a rotator that cycles through several lines (Framer Motion
+transitions: fade, slide up, slide left, scale, blur). The **Custom ProText** panel at the bottom of the dashboard
+controls it, with a live preview of a 1280×240 source.
+
+**Set it up**
+1. Connect the dashboard to OBS as usual.
+2. In OBS add a **Browser Source** (Sources → + → Browser) and paste the URL from the panel's **OBS Browser Source URL**
+   field (use the **URL** option, not "Local file"). Give it a width and height that fit your text, e.g. 1920×200, and
+   leave the custom CSS empty (the page makes its own background transparent).
+3. Edit in the panel. The overlay updates as you change things, and the panel shows `overlay: just now` when the source
+   confirms it received the settings.
+
+**How it works.** Both the dashboard and the Browser Source are obs-websocket clients. The dashboard sends the
+settings with `BroadcastCustomEvent`, OBS delivers it to every client as a `CustomEvent`, and the overlay listens for
+it. The overlay asks for the current settings whenever it (re)connects, so a freshly added or reloaded source fills in
+at once, and it also remembers the last settings it saw. Messages carry a `channel` name so other plugins' custom events
+are ignored, and everything the overlay receives is validated and clamped before it is rendered.
+
+- The route is `index.html#/overlay/text?ws=ws://localhost:4455&pw=<password>`; add `&debug=1` to show a connection
+  status badge on the overlay. The same build serves the dashboard and the overlay, on GitHub Pages or from `file://`.
+- The URL contains the WebSocket password (only if one is set, and you can untick the box), and OBS stores a Browser
+  Source's URL in plain text in the scene collection.
+- Fonts come from Google Fonts, so the overlay needs internet access. Pick one from the list or type any family's exact
+  name under **Other…**. If a family doesn't offer the chosen weight, it falls back to the family's default styles.
+- With the rotator **off**, all lines are shown stacked; **on**, one at a time (sequential or random).
+- It's one shared channel: every text-engine overlay on this OBS shows the same settings.
+- It is a separate source from the native-text controls above. Preset and scene binding don't drive it yet.
+
