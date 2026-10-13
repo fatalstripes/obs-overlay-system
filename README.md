@@ -83,6 +83,32 @@ Setup in OBS:
 4. In the dashboard, connect, pick that **Source** and the **Filter** (the name you gave it, e.g. "User-defined shader"),
    then press **Apply** on the matching preset.
 
+## Importing your own shader
+
+You don't need the library to use a shader. In **Shader Uniforms**, drop a `.shader` / `.effect` file onto the
+dashed area (or press **Import shader…**). The dashboard reads the file's `uniform` declarations and builds the
+controls for you, then keeps them in sync with the filter on your source:
+
+| Declaration       | Control                | Sent to OBS as                |
+| ----------------- | ---------------------- | ----------------------------- |
+| `uniform float`   | range slider           | number                        |
+| `uniform int`     | range slider (whole)   | integer                       |
+| `uniform bool`    | on/off toggle          | `true` / `false`              |
+| `uniform float4`  | color picker           | ABGR integer (`0xAABBGGRR`)   |
+
+- Defaults come from the `= value` after the declaration. Slider ranges come from the `minimum`, `maximum` and
+  `step` annotations and the label from `string label`; with no annotations the range is guessed from the default.
+- obs-shaderfilter's own uniforms (`ViewProj`, `image`, `elapsed_time`, `uv_*`, `rand_*`, …) are ignored. Other types
+  (`float2`, `float3`, `texture2d`, …) have no control and are listed after the import.
+- A `float4` without `widget_type = "color"` still becomes a color picker, with a warning, because OBS may store it
+  differently.
+- Importing replaces the current uniform list. Uniforms from the previous list that the new shader doesn't declare
+  are reset to 0 / false / black in OBS with the next push.
+- The shader file in OBS still needs **Use Effect File (.effect)** ticked, as above.
+
+`npm test` runs the parser's tests, including a check that every bundled shader parses to exactly the controls its
+library presets expect.
+
 Tips:
 - Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
   source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).

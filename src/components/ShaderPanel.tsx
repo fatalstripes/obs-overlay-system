@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { pushShader, withSyncErrors } from '../lib/sync'
 import { obs, useObsStore } from '../store/useObsStore'
+import type { Uniform } from '../store/types'
 import { usePresetStore } from '../store/usePresetStore'
-import { ColorPicker } from './ColorPicker'
 import { Field } from './Field'
 import { NamePicker } from './NamePicker'
 import { Panel, ghostButtonClass, inputClass } from './Panel'
-import { Slider } from './Slider'
+import { ShaderImport } from './ShaderImport'
+import { UniformControl } from './UniformControl'
 import { Switch } from './Switch'
 
 export function ShaderPanel() {
@@ -17,7 +18,7 @@ export function ShaderPanel() {
   const connected = status === 'connected'
 
   const [newName, setNewName] = useState('')
-  const [newKind, setNewKind] = useState<'float' | 'color'>('float')
+  const [newKind, setNewKind] = useState<Uniform['kind']>('float')
 
   useEffect(() => {
     if (!connected) return
@@ -55,7 +56,11 @@ export function ShaderPanel() {
     addUniform(
       newKind === 'float'
         ? { kind: 'float', name, value: 0, min: 0, max: 1, step: 0.01 }
-        : { kind: 'color', name, value: '#ffffff' },
+        : newKind === 'int'
+          ? { kind: 'int', name, value: 0, min: 0, max: 10, step: 1 }
+          : newKind === 'bool'
+            ? { kind: 'bool', name, value: false }
+            : { kind: 'color', name, value: '#ffffff' },
     )
     setNewName('')
   }
@@ -111,22 +116,13 @@ export function ShaderPanel() {
         </p>
       )}
 
+      <ShaderImport />
+
       <div className="space-y-4">
         {current.uniforms.map((u) => (
           <div key={u.name} className="flex items-start gap-2">
             <div className="flex-1">
-              {u.kind === 'float' ? (
-                <Slider
-                  label={u.name}
-                  value={u.value}
-                  min={u.min}
-                  max={u.max}
-                  step={u.step}
-                  onChange={(v) => setUniformValue(u.name, v)}
-                />
-              ) : (
-                <ColorPicker label={u.name} value={u.value} onChange={(v) => setUniformValue(u.name, v)} />
-              )}
+              <UniformControl u={u} onChange={(v) => setUniformValue(u.name, v)} />
             </div>
             <button
               className="text-zinc-600 hover:text-red-400"
@@ -150,10 +146,12 @@ export function ShaderPanel() {
         <select
           className={`${inputClass} w-28`}
           value={newKind}
-          onChange={(e) => setNewKind(e.target.value as 'float' | 'color')}
+          onChange={(e) => setNewKind(e.target.value as Uniform['kind'])}
         >
           <option value="float">float</option>
-          <option value="color">color</option>
+          <option value="int">int</option>
+          <option value="bool">bool</option>
+          <option value="color">float4 (color)</option>
         </select>
         <button className={ghostButtonClass} onClick={add}>
           Add

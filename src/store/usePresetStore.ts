@@ -32,7 +32,7 @@ type PresetState = {
   activePresetId: string | null
 
   setTargets: (patch: Partial<Targets>) => void
-  setUniformValue: (name: string, value: number | string) => void
+  setUniformValue: (name: string, value: number | string | boolean) => void
   addUniform: (uniform: Uniform) => void
   removeUniform: (name: string) => void
   /** Replace all uniforms (e.g. from the shader library); targets and text are untouched. */

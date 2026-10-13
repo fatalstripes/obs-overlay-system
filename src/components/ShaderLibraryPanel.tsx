@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { SHADER_CATEGORIES, SHADER_LIBRARY, type ShaderCategory } from '../lib/shaderLibrary'
-import { pushShader, queueUniformReset, withSyncErrors } from '../lib/sync'
+import { applyUniformSet, pushShader, withSyncErrors } from '../lib/sync'
 import { useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
 import { Panel, ghostButtonClass } from './Panel'
 
 export function ShaderLibraryPanel() {
-  const applyUniforms = usePresetStore((s) => s.applyUniforms)
   const connected = useObsStore((s) => s.status === 'connected')
   const [category, setCategory] = useState<ShaderCategory | 'All'>('All')
   const [appliedId, setAppliedId] = useState<string | null>(null)
@@ -17,12 +16,7 @@ export function ShaderLibraryPanel() {
   const apply = (id: string) => {
     const entry = SHADER_LIBRARY.find((e) => e.id === id)
     if (!entry) return
-    // Uniforms from the previous shader that the new one doesn't use get zeroed in OBS,
-    // so their old values can't carry over into a shader that happens to share a name.
-    const next = new Set(entry.uniforms.map((u) => u.name))
-    const stale = usePresetStore.getState().current.uniforms.filter((u) => !next.has(u.name))
-    if (connected) queueUniformReset(stale)
-    applyUniforms(entry.uniforms)
+    applyUniformSet(entry.uniforms)
     setAppliedId(id)
 
     const { shaderSource, shaderFilter } = usePresetStore.getState().current.targets
