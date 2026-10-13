@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { sanitizeSettings, type TextEngineSettings } from '../lib/textEngine.ts'
-import type { Preset, PresetValues, TextStyle, Targets, Uniform } from './types'
+import type { Preset, PresetValues, TextStyle, Targets, Uniform } from './types.ts'
 
 export const defaultValues = (): PresetValues => ({
   targets: {

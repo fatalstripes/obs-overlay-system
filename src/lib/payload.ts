@@ -1,5 +1,5 @@
 import { hexToObsColor } from './color.ts'
-import type { Uniform } from '../store/types'
+import type { Uniform } from '../store/types.ts'
 
 /**
  * The value as OBS expects it in filter settings (ABGR int for colors, true integers for ints), or

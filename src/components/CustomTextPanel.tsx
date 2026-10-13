@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
+import { agoLabel } from '../lib/ago'
 import { sendTextSettings } from '../lib/textBridge'
 import { withSyncErrors } from '../lib/sync'
 import { buildOverlayUrl, POPULAR_FONTS, TRANSITIONS, isFontFamily, type Align } from '../lib/textEngine'
@@ -7,49 +8,15 @@ import { usePresetStore } from '../store/usePresetStore'
 import { useTextEngineStore } from '../store/useTextEngineStore'
 import { ColorPicker } from './ColorPicker'
 import { Field } from './Field'
-import { Panel, buttonClass, ghostButtonClass, inputClass } from './Panel'
+import { Panel, ghostButtonClass, inputClass } from './Panel'
 import { Slider } from './Slider'
 import { Switch } from './Switch'
+import { BrowserSourceUrl } from './BrowserSourceUrl'
+import { PreviewStage } from './PreviewStage'
 import { TextEngineView } from './TextEngineView'
 
 const STAGE_W = 1280
 const STAGE_H = 240
-
-/** What the overlay looks like in a 1280×240 Browser Source, scaled to fit the panel, over a transparency checkerboard. */
-function PreviewStage() {
-  const settings = useTextEngineStore((s) => s.settings)
-  const box = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(0.4)
-
-  useEffect(() => {
-    const el = box.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setScale(el.clientWidth / STAGE_W))
-    ro.observe(el) // fires once straight away, so the scale is right from the first paint
-    return () => ro.disconnect()
-  }, [])
-
-  return (
-    <div
-      ref={box}
-      className="relative w-full overflow-hidden rounded-md border border-zinc-800"
-      style={{
-        aspectRatio: `${STAGE_W} / ${STAGE_H}`,
-        backgroundImage:
-          'linear-gradient(45deg,#27272a 25%,transparent 25%),linear-gradient(-45deg,#27272a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#27272a 75%),linear-gradient(-45deg,transparent 75%,#27272a 75%)',
-        backgroundSize: '20px 20px',
-        backgroundPosition: '0 0,0 10px,10px -10px,-10px 0',
-        backgroundColor: '#18181b',
-      }}
-    >
-      <div
-        style={{ position: 'absolute', left: 0, top: 0, width: STAGE_W, height: STAGE_H, transform: `scale(${scale})`, transformOrigin: '0 0' }}
-      >
-        <TextEngineView settings={settings} />
-      </div>
-    </div>
-  )
-}
 
 /** Says where an edit goes right now: into the live scene's preset, or just the shared overlay. */
 function SceneContext() {
@@ -84,35 +51,14 @@ function SceneContext() {
 const WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900]
 const OTHER = '__other__'
 
-function useAgo(at: number | null): string {
-  // Re-evaluated whenever the panel re-renders (settings change, acks); no timer needed for a rough "how long ago".
-  if (!at) return 'never'
-  const s = Math.max(0, Math.round((Date.now() - at) / 1000))
-  return s < 2 ? 'just now' : s < 90 ? `${s}s ago` : `${Math.round(s / 60)} min ago`
-}
-
 export function CustomTextPanel() {
   const store = useTextEngineStore()
   const { settings: s, update, updateGradient, updateRotator, lastAckAt, lastSentAt } = store
-  const { url, password, status } = useObsStore()
+  const { status } = useObsStore()
   const connected = status === 'connected'
 
-  const [includePassword, setIncludePassword] = useState(true)
-  const [copied, setCopied] = useState(false)
   const [customFont, setCustomFont] = useState(!POPULAR_FONTS.includes(s.fontFamily))
   const [fontDraft, setFontDraft] = useState(s.fontFamily)
-
-  const overlayUrl = buildOverlayUrl(window.location.href, url, includePassword ? password : '')
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(overlayUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // clipboard can be blocked in some docks; the field is selectable
-    }
-  }
 
   const aligns: Align[] = ['left', 'center', 'right']
 
@@ -121,7 +67,7 @@ export function CustomTextPanel() {
       title="Custom ProText"
       actions={
         <div className="flex items-center gap-3 text-xs text-zinc-400">
-          <span title="When the overlay last confirmed it received the settings">overlay: {useAgo(lastAckAt)}</span>
+          <span title="When the overlay last confirmed it received the settings">overlay: {agoLabel(lastAckAt)}</span>
           <button
             className={ghostButtonClass}
             disabled={!connected}
@@ -290,27 +236,15 @@ export function CustomTextPanel() {
 
           <div className="space-y-1">
             <span className="text-xs text-zinc-400">Preview ({STAGE_W}×{STAGE_H} Browser Source)</span>
-            <PreviewStage />
+            <PreviewStage width={STAGE_W} height={STAGE_H}>
+              <TextEngineView settings={s} />
+            </PreviewStage>
           </div>
 
-          <div className="space-y-2 border-t border-zinc-800 pt-4">
-            <Field label="OBS Browser Source URL">
-              <div className="flex gap-2">
-                <input className={`${inputClass} font-mono text-xs`} readOnly value={overlayUrl} onFocus={(e) => e.currentTarget.select()} />
-                <button className={buttonClass} onClick={() => void copy()}>
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </Field>
-            <label className="flex items-center gap-2 text-xs text-zinc-400">
-              <input type="checkbox" checked={includePassword} onChange={(e) => setIncludePassword(e.target.checked)} />
-              Include the WebSocket password in the URL (OBS stores a Browser Source's URL in plain text)
-            </label>
-            <p className="text-xs text-zinc-500">
-              In OBS add a <b>Browser Source</b> with this URL (<b>URL</b> option, not "Local file"), a width and height that
-              fit your text, and no custom CSS. The overlay connects to OBS's WebSocket by itself and updates as you edit.
-            </p>
-          </div>
+          <BrowserSourceUrl build={buildOverlayUrl}>
+            In OBS add a <b>Browser Source</b> with this URL (<b>URL</b> option, not "Local file"), a width and height that
+            fit your text, and no custom CSS. The overlay connects to OBS's WebSocket by itself and updates as you edit.
+          </BrowserSourceUrl>
         </div>
       </div>
     </Panel>

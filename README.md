@@ -57,6 +57,16 @@ npm run dev   # http://localhost:5317
 
 The port is fixed (`strictPort`) because Better Alerts uses 5173; change it in `vite.config.ts` if needed.
 
+```
+npm test      # unit tests, plus integration tests against a mock obs-websocket server
+npm run lint
+```
+
+The mock OBS server in `tests/helpers/mockObs.mjs` speaks the real obs-websocket v5 protocol (JSON and MessagePack)
+over a real WebSocket, with scenes, scene items and transforms (including the high-volume
+`SceneItemTransformChanged` event), inputs and their settings, media actions and `BroadcastCustomEvent`. The app's own
+sync code runs against it unchanged. CI runs lint, the tests and the build on every pull request.
+
 ## Shaders for the Shader Library
 
 The Shader Library only sets uniform *values*. The effect itself comes from a shader file loaded into the
@@ -205,3 +215,49 @@ are ignored, and everything the overlay receives is validated and clamped before
 - It's one shared channel: every text-engine overlay on this OBS shows the same settings.
 - It is a separate source from the native-text controls above, but presets can carry its settings: see "Scene presets" below.
 
+## Socials (rotating handles overlay)
+
+A second Browser Source that cycles through your social platforms, e.g. a Twitch icon with `yourchannel`, then X with
+`@yourhandle`. Add it the same way as the text overlay: the **Socials** panel has its own **OBS Browser Source URL**
+(`index.html#/overlay/socials?ws=...`, plus `&debug=1` for a status badge), a size like 1280×160 works well, and the
+panel's preview shows what it will look like.
+
+- **Platforms:** add, remove and reorder entries; each has a platform (Twitch, YouTube, Kick, X, Instagram, TikTok,
+  Discord, Facebook, Bluesky, Threads, Reddit, GitHub, Patreon, Spotify, Snapchat, LinkedIn or Custom), a handle, an
+  optional label and an optional **custom icon**: an `https://` image URL, or a short glyph/emoji such as `🔥`.
+- **Rotator:** how long each stays up, the Framer Motion transition (fade, slide up, slide left, scale, blur), its
+  duration and the order (sequential or random). With the rotator off, all platforms are shown stacked.
+- **Style:** Google font, text and icon size, gap, outline, colors, alignment, brand-colored or text-colored icons, and
+  an optional platform-name line above the handle.
+- Platform logos are fetched from the simple-icons CDN, so the source needs internet access; if one can't load, a
+  colored letter badge is shown instead.
+- It uses its own bridge channel (`obs-overlay-system/socials`) over `BroadcastCustomEvent`, so it never interferes with
+  the text overlay. Everything the overlay receives is validated first (custom icons can only be `https:` or small
+  `data:image` URLs, never `http:`/`javascript:`), and it remembers the last settings it saw.
+
+## Layout (move and scale without unlocking)
+
+The **Layout** panel moves, scales and rotates a source in a scene straight from the dashboard, with no need to unlock it
+in OBS. Choose a scene (or follow the program scene) and a source; the panel resolves it with `GetSceneItemId`, reads
+it with `GetSceneItemTransform` and sends changes with `SetSceneItemTransform`.
+
+- X/Y position (canvas pixels), Scale X/Y with an optional **Lock aspect**, and rotation in degrees. Slider drags are
+  merged and sent a few times a second. Only the fields you change are sent, so crop, bounds and alignment stay as they
+  are in OBS. A scale of exactly 0 can't be sent (it would hide the item); negative scales flip it.
+- **Reset** restores the values the item had when it was loaded.
+- Changes made in OBS itself (dragging the item) show up in the panel: the dashboard subscribes to obs-websocket's
+  high-volume `SceneItemTransformChanged` event when it connects.
+- Items with a **bounding box** are sized by the box in OBS, so the scale values may not change how big they look; the
+  panel warns you and you can set "No bounds" in OBS's Edit Transform.
+- With **Live sync** off, edits are held and sent when it is switched back on.
+
+## Media Swap
+
+The **Media Swap** panel changes the file of an **Image** or **Media** source (`SetInputSettings`, keeping the source's
+other settings) without opening its properties in OBS. Pick the source, paste the new path and press **Swap file**. It
+shows the file currently set, remembers the last few paths per source for one-click swapping, and a Media source can be
+restarted after the swap so the new clip plays from the start.
+
+- A browser can't read real file paths from a file picker, so type or paste the path. Quotes (Windows "Copy as path")
+  and `file://` URLs are cleaned up. The path is opened by OBS, so it must exist on the computer OBS runs on.
+- Image sources use the `file` setting; Media sources use `local_file` (the panel also sets `is_local_file`).

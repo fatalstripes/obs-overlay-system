@@ -1,4 +1,4 @@
-import OBSWebSocket from 'obs-websocket-js'
+import OBSWebSocket, { EventSubscription } from 'obs-websocket-js'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -74,7 +74,10 @@ export const useObsStore = create<ObsState>()(
         if (status !== 'disconnected') return // e.g. StrictMode's double mount, or a double click
         set({ status: 'connecting', error: null })
         try {
-          await obs.connect(url, password || undefined)
+          // SceneItemTransformChanged is a high-volume event (not in `All`); the Layout panel uses it to follow edits made in OBS.
+          await obs.connect(url, password || undefined, {
+            eventSubscriptions: EventSubscription.All | EventSubscription.SceneItemTransformChanged,
+          })
           set({ status: 'connected', autoConnect: true })
           await get().refreshInputs()
           await get().refreshScenes()
