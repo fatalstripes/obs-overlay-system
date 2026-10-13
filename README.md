@@ -83,6 +83,15 @@ Setup in OBS:
 4. In the dashboard, connect, pick that **Source** and the **Filter** (the name you gave it, e.g. "User-defined shader"),
    then press **Apply** on the matching preset.
 
+Tips:
+- Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
+  source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
+- The **Filter on/off** switch in the Shader Uniforms panel turns the filter on or off in OBS (the eye icon) and follows
+  changes made in OBS. **Push now** and live sync only send values; they never switch the filter on.
+- Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
+- A source that vanishes when you add the filter almost always means **Use Effect File (.effect)** is unticked.
+- If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.
+
 ## Importing your own shader
 
 You don't need the library to use a shader. In **Shader Uniforms**, drop a `.shader` / `.effect` file onto the
@@ -108,12 +117,3 @@ controls for you, then keeps them in sync with the filter on your source:
 
 `npm test` runs the parser's tests, including a check that every bundled shader parses to exactly the controls its
 library presets expect.
-
-Tips:
-- Effects that spread outside the text (Glow, Heat Wave, Glitch) are clipped at the source's bounds. Give the text
-  source some empty room around it (a larger custom text extent, or put it in a bigger scene/group).
-- The **Filter on/off** switch in the Shader Uniforms panel turns the filter on or off in OBS (the eye icon) and follows
-  changes made in OBS. **Push now** and live sync only send values; they never switch the filter on.
-- Glitch Burst and Electric Storm flicker; keep the speed low if you or your viewers are sensitive to flashing.
-- A source that vanishes when you add the filter almost always means **Use Effect File (.effect)** is unticked.
-- If a shader doesn't load, check **Help → Log Files → View Current Log** and search for `error` near the file name.
