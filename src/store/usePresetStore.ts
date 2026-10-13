@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { sanitizeSettings, type TextEngineSettings } from '../lib/textEngine.ts'
 import type { Preset, PresetValues, TextStyle, Targets, Uniform } from './types'
 
 export const defaultValues = (): PresetValues => ({
@@ -43,7 +44,8 @@ type PresetState = {
   applyUniforms: (uniforms: Uniform[]) => void
   setText: (patch: Partial<TextStyle>) => void
 
-  savePreset: (name: string) => void
+  /** Saves the current values under `name` (same name overwrites). With `textEngine`, the preset carries those overlay settings too. */
+  savePreset: (name: string, textEngine?: TextEngineSettings) => void
   loadPreset: (id: string) => void
   deletePreset: (id: string) => void
 
@@ -96,19 +98,25 @@ export const usePresetStore = create<PresetState>()(
       setText: (patch) =>
         set((s) => ({ current: { ...s.current, text: { ...s.current.text, ...patch } } })),
 
-      savePreset: (name) => {
+      savePreset: (name, textEngine) => {
         const { presets, current } = get()
+        const saved: Pick<Preset, 'values' | 'textEngine'> = {
+          values: clone(current),
+          // validated on the way in, so a preset can never hold something the overlay would reject
+          ...(textEngine ? { textEngine: sanitizeSettings(clone(textEngine)) } : {}),
+        }
         const existing = presets.find((p) => p.name === name)
         if (existing) {
+          // overwriting replaces the whole preset, including dropping the ProText snapshot if this save has none
           set({
-            presets: presets.map((p) => (p.id === existing.id ? { ...p, values: clone(current) } : p)),
+            presets: presets.map((p) => (p.id === existing.id ? { id: p.id, name: p.name, ...saved } : p)),
             activePresetId: existing.id,
           })
           return
         }
         const id = crypto.randomUUID()
         set({
-          presets: [...presets, { id, name, values: clone(current) }],
+          presets: [...presets, { id, name, ...saved }],
           activePresetId: id,
         })
       },

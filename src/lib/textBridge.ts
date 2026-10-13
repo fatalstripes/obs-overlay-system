@@ -4,6 +4,18 @@ import { errorMessage } from './sync'
 import { obs, useObsStore } from '../store/useObsStore'
 import { useTextEngineStore } from '../store/useTextEngineStore'
 
+let bridgeSuppressed = 0
+
+/** Runs `fn` without the bridge reacting to the settings changes it makes (the caller sends explicitly). */
+export function withoutTextBridge<T>(fn: () => T): T {
+  bridgeSuppressed++
+  try {
+    return fn()
+  } finally {
+    bridgeSuppressed--
+  }
+}
+
 /** Broadcasts the current text-engine settings to every overlay listening on this OBS (obs-websocket CustomEvent). */
 export async function sendTextSettings(): Promise<void> {
   const { settings } = useTextEngineStore.getState()
@@ -29,7 +41,7 @@ export function startTextBridge(throttleMs = 60): () => void {
   }
 
   const unsubSettings = useTextEngineStore.subscribe((s, prev) => {
-    if (s.settings === prev.settings || !useObsStore.getState().liveSync) return
+    if (bridgeSuppressed || s.settings === prev.settings || !useObsStore.getState().liveSync) return
     timer ??= setTimeout(() => {
       timer = undefined
       push()

@@ -1,17 +1,34 @@
 import { obs, useObsStore } from '../store/useObsStore'
 import { usePresetStore } from '../store/usePresetStore'
+import { useTextEngineStore } from '../store/useTextEngineStore'
 import { pushAll, withoutLiveSync, withSyncErrors } from './sync'
+import { sendTextSettings, withoutTextBridge } from './textBridge'
 
 /**
- * Loads a saved preset into the dashboard and pushes all of it (shader uniforms and text) to OBS right away.
- * Live sync is held off for the load so the same values aren't sent twice.
+ * Loads a saved preset into the dashboard, including its Custom ProText settings when it has them. Nothing is
+ * forced to OBS here: live sync and the text bridge push the changes the way they do for any edit.
+ */
+export function loadPresetWithTextEngine(presetId: string): boolean {
+  const preset = usePresetStore.getState().presets.find((p) => p.id === presetId)
+  if (!preset) return false
+  usePresetStore.getState().loadPreset(presetId)
+  if (preset.textEngine) useTextEngineStore.getState().setSettings(preset.textEngine)
+  return true
+}
+
+/**
+ * Loads a saved preset and pushes all of it to OBS right away: the shader uniforms and native text, and (if the
+ * preset carries them) the Custom ProText overlay settings. Live sync and the text bridge are held off for the
+ * load so nothing is sent twice, and it works even when live sync is switched off.
  */
 export async function applyPresetNow(presetId: string): Promise<boolean> {
-  const { presets, loadPreset } = usePresetStore.getState()
-  if (!presets.some((p) => p.id === presetId)) return false
-  withoutLiveSync(() => loadPreset(presetId))
+  const preset = usePresetStore.getState().presets.find((p) => p.id === presetId)
+  if (!preset) return false
+  withoutLiveSync(() => withoutTextBridge(() => loadPresetWithTextEngine(presetId)))
   if (useObsStore.getState().status === 'connected') {
-    await withSyncErrors(pushAll(usePresetStore.getState().current))
+    const jobs = [pushAll(usePresetStore.getState().current)]
+    if (preset.textEngine) jobs.push(sendTextSettings())
+    await withSyncErrors(Promise.all(jobs))
   }
   return true
 }

@@ -1,3 +1,5 @@
+import type { TextEngineSettings } from '../lib/textEngine'
+
 type UniformBase = {
   name: string
   /** Display label from the shader's `string label = ...` annotation, if it has one. */
@@ -57,4 +59,9 @@ export type Preset = {
   id: string
   name: string
   values: PresetValues
+  /**
+   * The Custom ProText overlay's settings at the time of saving. Optional: a preset without it leaves the
+   * overlay alone when it is applied (this is also what presets saved before the text engine existed look like).
+   */
+  textEngine?: TextEngineSettings
 }
