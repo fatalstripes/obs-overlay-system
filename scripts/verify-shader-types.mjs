@@ -6,8 +6,9 @@
 //   node scripts/verify-shader-types.mjs --create --yes
 //       Builds a throwaway scene + color source + shader filter, runs the checks, then deletes them.
 //   node scripts/verify-shader-types.mjs --source "My Source" --filter "My Filter" --yes
-//       Uses a filter you already set up (User-defined shader, loading scripts/type-probe.shader, with
-//       "Use Effect File (.effect)" ticked). Its settings are saved first and restored afterwards.
+//       Uses a filter you already set up. It must have been CREATED with scripts/type-probe.shader loaded
+//       (User-defined shader, "Use Effect File (.effect)" ticked); re-pointing an existing filter at the probe
+//       is not picked up by OBS. Its settings are saved first and restored afterwards.
 //
 // Options: --url ws://localhost:4455   --password <pw> (or OBS_PASSWORD)   --kind <filterKind>   --keep
 // Requires: npm install (for obs-websocket-js), OBS with the WebSocket server enabled, obs-shaderfilter.
@@ -192,6 +193,7 @@ async function main() {
     console.log('The probe shader does not look like it is being applied. Check that the filter loads')
     console.log(`${SHADER_PATH}`)
     console.log('with "Use Effect File (.effect)" ticked, and look in the OBS log for shader errors.')
+    if (!opt.create) console.log('If you changed an existing filter to use the probe, create a new filter instead: OBS keeps the old shader.')
     process.exitCode = 1
     return
   }

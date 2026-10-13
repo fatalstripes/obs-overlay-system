@@ -130,9 +130,11 @@ npm run verify:obs-types -- --create --yes
 ```
 
 `--create` builds a throwaway scene, color source and shader filter (named `ZZ overlay probe …`), runs the checks
-and deletes them. To use a filter you already set up instead (User-defined shader loading
-`scripts/type-probe.shader`, with **Use Effect File (.effect)** ticked), pass `--source "…" --filter "…"`; its
-settings are saved first and restored afterwards. Without `--yes` it only prints what it would do. Other options:
+and deletes them. To use a filter you already set up instead, pass `--source "…" --filter "…"`; its settings are saved first and
+restored afterwards. That filter must be **created fresh with `scripts/type-probe.shader` loaded from the start**
+(User-defined shader, shader text file = the probe, **Use Effect File (.effect)** ticked). Don't point an
+existing filter at the probe through the API or by editing it: OBS keeps running the old shader, and the script
+will correctly report that the baseline isn't black. Without `--yes` it only prints what it would do. Other options:
 `--url ws://localhost:4455`, `--password …` (or `OBS_PASSWORD`), `--kind <filterKind>`, `--keep`. Run it on the
 machine running OBS. It uses the JSON wire encoding, the same as the dashboard.
 
