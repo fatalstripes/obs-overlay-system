@@ -118,26 +118,6 @@ controls for you, then keeps them in sync with the filter on your source:
 `npm test` runs the parser's tests, including a check that every bundled shader parses to exactly the controls its
 library presets expect.
 
-## Scene presets
-
-Bind a saved preset to an OBS scene and the dashboard applies it whenever OBS switches to that scene.
-
-1. Set up the shader and text the way you want them, then **Save** a preset (Presets panel).
-2. In **Scene Presets**, pick that preset for a scene. Connect first so the scenes are listed; the scene that is
-   live in OBS is marked.
-3. Switch scenes in OBS. The dashboard follows the program scene (`CurrentProgramSceneChanged`), loads the bound
-   preset and pushes its shader uniforms and text to OBS immediately; no clicks needed.
-
-- A preset carries its own source, filter and text-source names, so each scene's preset can target different sources.
-- Scenes with no binding leave everything as it is. The **Auto-apply** switch pauses the whole thing, and each row's
-  **Apply** button applies its preset by hand.
-- The bound preset is also applied when the dashboard connects (including the automatic reconnect on load) while
-  OBS is already on a bound scene.
-- Studio Mode: only the *program* scene counts, not the preview scene.
-- Bindings follow scene renames made in OBS, and are removed when their preset is deleted.
-- Only values that are valid are sent. A uniform with no usable value is left out of the payload instead of being
-  written as 0, and uniforms that a newly applied shader doesn't declare are not touched in OBS.
-
 ### Checking that OBS really uses int / bool values
 
 `scripts/verify-shader-types.mjs` pushes raw `int`, `bool`, `float` and color values to a shader filter on your
@@ -158,3 +138,22 @@ will correctly report that the baseline isn't black. Without `--yes` it only pri
 `--url ws://localhost:4455`, `--password …` (or `OBS_PASSWORD`), `--kind <filterKind>`, `--keep`. Run it on the
 machine running OBS. It uses the JSON wire encoding, the same as the dashboard.
 
+## Scene presets
+
+Bind a saved preset to an OBS scene and the dashboard applies it whenever OBS switches to that scene.
+
+1. Set up the shader and text the way you want them, then **Save** a preset (Presets panel).
+2. In **Scene Presets**, pick that preset for a scene. Connect first so the scenes are listed; the scene that is
+   live in OBS is marked.
+3. Switch scenes in OBS. The dashboard follows the program scene (`CurrentProgramSceneChanged`), loads the bound
+   preset and pushes its shader uniforms and text to OBS immediately; no clicks needed.
+
+- A preset carries its own source, filter and text-source names, so each scene's preset can target different sources.
+- Scenes with no binding leave everything as it is. The **Auto-apply** switch pauses the whole thing, and each row's
+  **Apply** button applies its preset by hand.
+- The bound preset is also applied when the dashboard connects (including the automatic reconnect on load) while
+  OBS is already on a bound scene.
+- Studio Mode: only the *program* scene counts, not the preview scene.
+- Bindings follow scene renames made in OBS, and are removed when their preset is deleted.
+- Only values that are valid are sent. A uniform with no usable value is left out of the payload instead of being
+  written as 0, and uniforms that a newly applied shader doesn't declare are not touched in OBS.
