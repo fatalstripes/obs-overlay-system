@@ -1,4 +1,4 @@
-import type { TextEngineSettings } from '../lib/textEngine'
+import type { TextEngineSettings } from '../lib/textEngine.ts'
 
 type UniformBase = {
   name: string

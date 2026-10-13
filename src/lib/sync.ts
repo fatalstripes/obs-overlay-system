@@ -1,8 +1,8 @@
-import { hexToObsColor } from './color'
-import { obs, useObsStore } from '../store/useObsStore'
-import { usePresetStore } from '../store/usePresetStore'
-import { buildFilterSettings, sanitizeUniforms } from './payload'
-import type { PresetValues, Uniform } from '../store/types'
+import { hexToObsColor } from './color.ts'
+import { obs, useObsStore } from '../store/useObsStore.ts'
+import { usePresetStore } from '../store/usePresetStore.ts'
+import { buildFilterSettings, sanitizeUniforms } from './payload.ts'
+import type { PresetValues, Uniform } from '../store/types.ts'
 
 /**
  * Replaces the uniform list (library preset or imported shader). Entries without a usable name or value are

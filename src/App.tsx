@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { CustomTextPanel } from './components/CustomTextPanel'
+import { LayoutPanel } from './components/LayoutPanel'
+import { MediaSwapPanel } from './components/MediaSwapPanel'
+import { SocialsOverlay } from './components/SocialsOverlay'
+import { SocialsPanel } from './components/SocialsPanel'
 import { TextEngineOverlay } from './components/TextEngineOverlay'
 import { ConnectionPanel } from './components/ConnectionPanel'
 import { SyncErrorBanner } from './components/SyncErrorBanner'
@@ -9,6 +13,9 @@ import { PresetPanel } from './components/PresetPanel'
 import { ShaderPanel } from './components/ShaderPanel'
 import { TextPanel } from './components/TextPanel'
 import { startSceneBinding } from './lib/sceneBinding'
+import { startLayoutSync } from './lib/layoutSync'
+import { parseSocialsRoute } from './lib/socials'
+import { startSocialsBridge } from './lib/socialsBridge'
 import { startLiveSync } from './lib/sync'
 import { startTextBridge } from './lib/textBridge'
 import { parseOverlayRoute } from './lib/textEngine'
@@ -19,6 +26,12 @@ function Dashboard() {
 
   // Broadcast the text engine's settings to the overlay Browser Source.
   useEffect(() => startTextBridge(), [])
+
+  // Same for the Socials rotator overlay.
+  useEffect(() => startSocialsBridge(), [])
+
+  // Keep the Layout panel in step with transforms changed in OBS.
+  useEffect(() => startLayoutSync(), [])
 
   // Follow OBS's program scene. Registered before the auto-connect below so its first scene isn't missed.
   useEffect(() => startSceneBinding(), [])
@@ -43,8 +56,13 @@ function Dashboard() {
         <ShaderPanel />
         <TextPanel />
       </div>
-      <div className="mt-4">
+      <div className="mt-4 space-y-4">
         <CustomTextPanel />
+        <SocialsPanel />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LayoutPanel />
+          <MediaSwapPanel />
+        </div>
       </div>
     </div>
   )
@@ -52,7 +70,8 @@ function Dashboard() {
 
 /**
  * Hash routing, so the same build works from GitHub Pages and from file:// (no server rewrites needed):
- * `#/overlay/text?...` is the transparent text overlay for an OBS Browser Source; anything else is the dashboard.
+ * `#/overlay/text?...` and `#/overlay/socials?...` are the transparent overlays for OBS Browser Sources; anything else
+ * is the dashboard.
  */
 export default function App() {
   const [hash, setHash] = useState(window.location.hash)
@@ -62,6 +81,9 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onChange)
   }, [])
 
-  const overlay = parseOverlayRoute(hash)
-  return overlay ? <TextEngineOverlay route={overlay} /> : <Dashboard />
+  const text = parseOverlayRoute(hash)
+  if (text) return <TextEngineOverlay route={text} />
+  const socials = parseSocialsRoute(hash)
+  if (socials) return <SocialsOverlay route={socials} />
+  return <Dashboard />
 }
